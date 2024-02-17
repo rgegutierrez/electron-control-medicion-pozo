@@ -13,7 +13,7 @@
       class="elevation-1"
       item-key="pozoId"
     >
-      <template #item.acciones="{ item }">
+      <template v-slot:[`item.acciones`]="{ item }">
         <v-btn icon @click="editarPozo(item)">
           <v-icon>mdi-pencil</v-icon>
         </v-btn>
