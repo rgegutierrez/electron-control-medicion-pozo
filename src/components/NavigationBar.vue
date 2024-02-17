@@ -5,6 +5,7 @@
       <v-btn text><router-link to="/" class="text-decoration-none white--text">Mediciones</router-link></v-btn>
       <v-btn text><router-link to="/dashboard" class="text-decoration-none white--text">Dashboard</router-link></v-btn>
       <v-btn text><router-link to="/carga-datos" class="text-decoration-none white--text">Carga de Datos</router-link></v-btn>
+      <v-btn text><router-link to="/pozo" class="text-decoration-none white--text">Pozos</router-link></v-btn>
     </v-app-bar>
   </template>
   
