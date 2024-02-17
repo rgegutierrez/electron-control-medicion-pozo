@@ -11,9 +11,9 @@
       :items="pozos"
       :items-per-page="5"
       class="elevation-1"
-      item-key="pozoId"
+      item-key="PozoId"
     >
-      <template v-slot:[`item.acciones`]="{ item }">
+      <template v-slot:[`item.Acciones`]="{ item }">
         <v-btn icon @click="editarPozo(item)">
           <v-icon>mdi-pencil</v-icon>
         </v-btn>
@@ -24,18 +24,18 @@
       <v-card>
         <v-card-title>
           <span class="headline"
-            >{{ pozoActual.pozoId ? "Editar" : "Agregar" }} Pozo</span
+            >{{ pozoActual.PozoId ? "Editar" : "Agregar" }} Pozo</span
           >
         </v-card-title>
         <v-card-text>
           <v-container>
             <v-form>
               <v-text-field
-                v-model="pozoActual.nombre"
+                v-model="pozoActual.Nombre"
                 label="Nombre del Pozo"
               ></v-text-field>
               <v-text-field
-                v-model="pozoActual.tipo"
+                v-model="pozoActual.Tipo"
                 label="Tipo de Pozo"
               ></v-text-field>
               <!-- Más campos según sea necesario -->
@@ -62,23 +62,32 @@ export default {
     return {
       // Ajusta los headers para reflejar los datos de un pozo
       headersPozo: [
-        { text: "Pozo ID", value: "pozoId" },
-        { text: "Nombre", value: "nombre" },
-        { text: "Tipo", value: "tipo" },
-        { text: "Acciones", value: "acciones", sortable: false },
+        { text: "Pozo ID", value: "PozoId" },
+        { text: "Nombre", value: "Nombre" },
+        { text: "Tipo", value: "Tipo" },
+        { text: "Acciones", value: "Acciones", sortable: false },
       ],
       // Datos de ejemplo, remplazar con datos reales obtenidos de la base de datos
-      pozos: [
-        { pozoId: 1, nombre: "Pozo 1", tipo: "Tipo 1" },
-        // Agregar más pozos según sea necesario
-      ],
+      pozos: [],
       // Para controlar la visibilidad del formulario de agregar/editar
       mostrarFormulario: false,
       // Datos del pozo actual para agregar/editar
       pozoActual: {},
     };
   },
+  async created() {
+    await this.cargarPozos();
+  },
   methods: {
+    async cargarPozos() {
+      // Enviar un mensaje al proceso principal para solicitar los datos de los pozos
+      window.electronAPI.send("solicitar-pozos");
+
+      // Escuchar la respuesta con los datos de los pozos
+      window.electronAPI.receive("cargar-pozos", (result) => {
+        this.pozos = result.pozos; // Actualizar la propiedad pozos con los datos recibidos
+      });
+    },
     mostrarFormularioAgregar() {
       this.pozoActual = {}; // Resetear pozoActual para un nuevo pozo
       this.mostrarFormulario = true;
@@ -87,24 +96,39 @@ export default {
       this.pozoActual = { ...pozo }; // Copiar el pozo a editar en pozoActual
       this.mostrarFormulario = true;
     },
-    insertarPozo() {
-      console.log("Insertar/Editar Pozo", this.pozoActual);
+    async insertarPozo() {
+      if (this.pozoActual.PozoId) {
+        const pozoDataSimplificado = {
+          PozoId: this.pozoActual.PozoId,
+          Nombre: this.pozoActual.Nombre,
+          Tipo: this.pozoActual.Tipo,
+          // Incluye otras propiedades necesarias que sean serializables
+        };
 
-      const pozoDataSimplificado = {
-        nombre: this.pozoActual.nombre,
-        tipo: this.pozoActual.tipo,
-        // Incluye otras propiedades necesarias que sean serializables
-      };
+        // Actualizar pozo existente
+        window.electronAPI.send("actualizar-pozo", pozoDataSimplificado);
 
-      // En tu componente Vue
-      window.electronAPI.send("insertar-pozo", pozoDataSimplificado);
+        window.electronAPI.receive("pozo-actualizado", (arg) => {
+          console.log(arg); // arg contiene la respuesta del proceso principal, por ejemplo, el ID del pozo actualizado
+        });
+      } else {
+        const pozoDataSimplificado = {
+          Nombre: this.pozoActual.Nombre,
+          Tipo: this.pozoActual.Tipo,
+          // Incluye otras propiedades necesarias que sean serializables
+        };
 
-      window.electronAPI.receive("pozo-insertado", (arg) => {
-        console.log(arg); // arg contiene la respuesta del proceso principal, por ejemplo, el ID del pozo insertado
-      });
+        // Insertar nuevo pozo
+        window.electronAPI.send("insertar-pozo", pozoDataSimplificado);
+
+        window.electronAPI.receive("pozo-insertado", (arg) => {
+          console.log(arg); // arg contiene la respuesta del proceso principal, por ejemplo, el ID del pozo insertado
+        });
+      }
 
       // Cerrar el formulario después de insertar/editar
       this.mostrarFormulario = false;
+      await this.cargarPozos();
     },
   },
 };
