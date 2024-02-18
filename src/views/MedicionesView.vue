@@ -59,16 +59,16 @@
       </template>
 
       <!-- STD Medido -->
-      <template v-slot:[`item.STDmedido`]="{ item }">
+      <template v-slot:[`item.STDMedido`]="{ item }">
         <span :style="{ color: item.STDColor }" :title="`> ${item.STD}`">{{
-          item.STDmedido
+          item.STDMedido
         }}</span>
       </template>
 
       <!-- SO4 Medido -->
-      <template v-slot:[`item.SO4medido`]="{ item }">
+      <template v-slot:[`item.SO4Medido`]="{ item }">
         <span :style="{ color: item.SO4Color }" :title="`> ${item.SO4}`">{{
-          item.SO4medido
+          item.SO4Medido
         }}</span>
       </template>
 
@@ -137,7 +137,7 @@
 
               <v-text-field
                 label="STD Medido"
-                v-model="medicionActual.STDmedido"
+                v-model="medicionActual.STDMedido"
                 type="number"
                 min="0"
                 required
@@ -145,7 +145,7 @@
 
               <v-text-field
                 label="SO4 Medido"
-                v-model="medicionActual.SO4medido"
+                v-model="medicionActual.SO4Medido"
                 type="number"
                 min="0"
                 required
@@ -194,8 +194,8 @@ export default {
         { title: "Criticidad", key: "Tipo" },
         { title: "pH Medido", key: "pHMedido", align: "end" },
         { title: "CE Medido (µS/cm)", key: "CEMedido", align: "end" },
-        { title: "STD Medido (mg/l)", key: "STDmedido", align: "end" },
-        { title: "SO4 Medido (mg/l)", key: "SO4medido", align: "end" },
+        { title: "STD Medido (mg/l)", key: "STDMedido", align: "end" },
+        { title: "SO4 Medido (mg/l)", key: "SO4Medido", align: "end" },
         { title: "Cu Medido (mg/l)", key: "CuMedido", align: "end" },
         { title: "Acciones", key: "Acciones", sortable: false },
       ],
@@ -220,6 +220,11 @@ export default {
     off(datosRefPozo);
   },
   methods: {
+    convertirANullODecimal(valor) {
+      // Convierte el valor a decimal si es posible; de lo contrario, devuelve null
+      const numero = Number(valor);
+      return isNaN(numero) ? null : numero;
+    },
     async cargarPozos() {
       const datosRef = ref(database, "pozos/");
       onValue(
@@ -271,14 +276,17 @@ export default {
       this.mostrarFormulario = true;
     },
     async insertarMedicion() {
+      console.log(`fecha`, this.medicionActual.Fecha);
+
       const data = {
         Pozo: this.medicionActual.Pozo,
         Fecha: this.medicionActual.Fecha,
-        pHMedido: this.medicionActual.pHMedido,
-        CEMedido: this.medicionActual.CEMedido,
-        STDmedido: this.medicionActual.STDmedido,
-        SO4medido: this.medicionActual.SO4medido,
-        CuMedido: this.medicionActual.CuMedido,
+        Mes: this.medicionActual.Fecha.substring(0, 7),
+        pHMedido: this.convertirANullODecimal(this.medicionActual.pHMedido),
+        CEMedido: this.convertirANullODecimal(this.medicionActual.CEMedido),
+        STDMedido: this.convertirANullODecimal(this.medicionActual.STDMedido),
+        SO4Medido: this.convertirANullODecimal(this.medicionActual.SO4Medido),
+        CuMedido: this.convertirANullODecimal(this.medicionActual.CuMedido),
       };
 
       if (this.medicionActual.id) {
@@ -336,10 +344,10 @@ export default {
           if (parseFloat(medicion.CEMedido) > parseFloat(restoPozo.CE)) {
             CEColor = "red";
           }
-          if (parseFloat(medicion.STDmedido) > parseFloat(restoPozo.STD)) {
+          if (parseFloat(medicion.STDMedido) > parseFloat(restoPozo.STD)) {
             STDColor = "red";
           }
-          if (parseFloat(medicion.SO4medido) > parseFloat(restoPozo.SO4)) {
+          if (parseFloat(medicion.SO4Medido) > parseFloat(restoPozo.SO4)) {
             SO4Color = "red";
           }
           if (

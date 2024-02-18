@@ -166,6 +166,11 @@ export default {
     off(datosRef);
   },
   methods: {
+    convertirANullODecimal(valor) {
+      // Convierte el valor a decimal si es posible; de lo contrario, devuelve null
+      const numero = Number(valor);
+      return isNaN(numero) ? null : numero;
+    },
     async recargar() {
       const datosRef = ref(database, "pozos/");
       onValue(
@@ -198,12 +203,12 @@ export default {
       const data = {
         Nombre: this.pozoActual.Nombre,
         Tipo: this.pozoActual.Tipo,
-        pHInferior: this.pozoActual.pHInferior,
-        pHSuperior: this.pozoActual.pHSuperior,
-        CE: this.pozoActual.CE,
-        STD: this.pozoActual.STD,
-        SO4: this.pozoActual.SO4,
-        CuDisuelto: this.pozoActual.CuDisuelto,
+        pHInferior: this.convertirANullODecimal(this.pozoActual.pHInferior),
+        pHSuperior: this.convertirANullODecimal(this.pozoActual.pHSuperior),
+        CE: this.convertirANullODecimal(this.pozoActual.CE),
+        STD: this.convertirANullODecimal(this.pozoActual.STD),
+        SO4: this.convertirANullODecimal(this.pozoActual.SO4),
+        CuDisuelto: this.convertirANullODecimal(this.pozoActual.CuDisuelto),
       };
 
       if (this.pozoActual.id) {

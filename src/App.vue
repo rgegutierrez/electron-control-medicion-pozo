@@ -5,7 +5,7 @@
         <v-list>
           <v-list-item>
             <v-list-item-content>
-              <v-list-item-title class="title text-center my-8"
+              <v-list-item-title class="title text-center my-8 text-uppercase"
                 >Control Medición Pozo</v-list-item-title
               >
             </v-list-item-content>
