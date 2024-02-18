@@ -7,7 +7,7 @@
 
     <!-- Tabla de Pozos -->
     <v-data-table
-      :headers="headersPozo"
+      :headers="headers"
       :items="pozos"
       :items-per-page="5"
       class="elevation-1"
@@ -61,7 +61,7 @@ export default {
   data() {
     return {
       // Ajusta los headers para reflejar los datos de un pozo
-      headersPozo: [
+      headers: [
         { text: "Pozo ID", value: "PozoId" },
         { text: "Nombre", value: "Nombre" },
         { text: "Tipo", value: "Tipo" },
@@ -84,9 +84,14 @@ export default {
       window.electronAPI.send("solicitar-pozos");
 
       // Escuchar la respuesta con los datos de los pozos
-      window.electronAPI.receive("cargar-pozos", (result) => {
-        this.pozos = result.pozos; // Actualizar la propiedad pozos con los datos recibidos
-      });
+      const removeListener = window.electronAPI.receive(
+        "cargar-pozos",
+        (result) => {
+          console.log(`cargar-pozos`, result);
+          this.pozos = result.pozos; // Actualizar la propiedad pozos con los datos recibidos
+          removeListener();
+        }
+      );
     },
     mostrarFormularioAgregar() {
       this.pozoActual = {}; // Resetear pozoActual para un nuevo pozo
@@ -108,9 +113,13 @@ export default {
         // Actualizar pozo existente
         window.electronAPI.send("actualizar-pozo", pozoDataSimplificado);
 
-        window.electronAPI.receive("pozo-actualizado", (arg) => {
-          console.log(arg); // arg contiene la respuesta del proceso principal, por ejemplo, el ID del pozo actualizado
-        });
+        const removeListener = window.electronAPI.receive(
+          "pozo-actualizado",
+          (arg) => {
+            console.log(arg); // arg contiene la respuesta del proceso principal, por ejemplo, el ID del pozo actualizado
+            removeListener();
+          }
+        );
       } else {
         const pozoDataSimplificado = {
           Nombre: this.pozoActual.Nombre,
@@ -121,8 +130,9 @@ export default {
         // Insertar nuevo pozo
         window.electronAPI.send("insertar-pozo", pozoDataSimplificado);
 
-        window.electronAPI.receive("pozo-insertado", (arg) => {
+        const removeListener = window.electronAPI.receive("pozo-insertado", (arg) => {
           console.log(arg); // arg contiene la respuesta del proceso principal, por ejemplo, el ID del pozo insertado
+          removeListener();
         });
       }
 
