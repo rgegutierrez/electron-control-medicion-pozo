@@ -9,7 +9,6 @@
     <v-data-table
       :headers="headers"
       :items="pozos"
-      :items-per-page="5"
       class="elevation-1"
       item-key="PozoId"
     >
@@ -62,10 +61,10 @@ export default {
     return {
       // Ajusta los headers para reflejar los datos de un pozo
       headers: [
-        { text: "Pozo ID", value: "PozoId" },
-        { text: "Nombre", value: "Nombre" },
-        { text: "Tipo", value: "Tipo" },
-        { text: "Acciones", value: "Acciones", sortable: false },
+        { title: "Pozo ID", key: "PozoId" },
+        { title: "Nombre", key: "Nombre" },
+        { title: "Tipo", key: "Tipo" },
+        { title: "Acciones", key: "Acciones", sortable: false },
       ],
       // Datos de ejemplo, remplazar con datos reales obtenidos de la base de datos
       pozos: [],

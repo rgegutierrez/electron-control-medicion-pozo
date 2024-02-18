@@ -110,7 +110,11 @@ const registerMedicionHandlers = () => {
   });
 
   ipcMain.on("solicitar-mediciones", (event) => {
-    const sql = `SELECT * FROM Medicion`;
+    const sql = `
+    SELECT M.MedicionId, M.PozoId, P.Nombre AS PozoNombre, M.Fecha, M.pHMedido, M.CEMedido, M.STDmedido, M.SO4medido, M.CuMedido, M.Enviado 
+    FROM Medicion AS M
+    JOIN Pozo AS P ON P.PozoId = M.PozoId
+    `;
     db.all(sql, [], (err, rows) => {
       if (err) {
         console.error(`Error al solicitar los mediciones: ${err.message}`);

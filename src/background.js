@@ -5,7 +5,7 @@ import { createProtocol } from "vue-cli-plugin-electron-builder/lib";
 import installExtension, { VUEJS3_DEVTOOLS } from "electron-devtools-installer";
 const { registerPozoHandlers } = require("./ipcHandlers/pozosHandlers");
 const { registerMedicionHandlers } = require("./ipcHandlers/MedicionesHandlers");
-
+const { registerEmailHandlers } = require("./ipcHandlers/emailsHandlers");
 
 const path = require("path");
 
@@ -71,6 +71,7 @@ app.on("ready", async () => {
 
   registerPozoHandlers();
   registerMedicionHandlers();
+  registerEmailHandlers();
 });
 
 // Exit cleanly on request from parent process in development mode.

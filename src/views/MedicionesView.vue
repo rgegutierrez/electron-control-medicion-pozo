@@ -4,17 +4,17 @@
     <v-btn color="primary" @click="mostrarFormularioAgregar"
       >Agregar Medición</v-btn
     >
+    <v-btn color="success" @click="sincronizarMediciones">Sincronizar</v-btn>
 
     <!-- Tabla de Mediciones -->
     <v-data-table
       :headers="headers"
       :items="mediciones"
-      :items-per-page="5"
       class="elevation-1"
       item-key="MedicionId"
     >
       <template v-slot:[`item.Acciones`]="{ item }">
-        <v-btn icon @click="editarPozo(item)">
+        <v-btn icon @click="editarMedicion(item)">
           <v-icon>mdi-pencil</v-icon>
         </v-btn>
       </template>
@@ -91,7 +91,7 @@
           <v-btn color="blue darken-1" text @click="mostrarFormulario = false"
             >Cancelar</v-btn
           >
-          <v-btn color="blue darken-1" text @click="insertarPozo"
+          <v-btn color="blue darken-1" text @click="insertarMedicion"
             >Guardar</v-btn
           >
         </v-card-actions>
@@ -106,13 +106,15 @@ export default {
     return {
       // Ajusta los headers para reflejar los datos de un medicion
       headers: [
-        { text: "Medición", value: "MedicionId" },
-        { text: "Fecha", value: "Fecha" },
-        { text: "pH Medido", value: "pHMedido", align: "end" },
-        { text: "CE Medido", value: "CEMedido", align: "end" },
-        { text: "STD Medido", value: "STDmedido", align: "end" },
-        { text: "SO4 Medido", value: "SO4medido", align: "end" },
-        { text: "Cu Medido", value: "CuMedido", align: "end" },
+        { title: "Medición", key: "MedicionId" },
+        { title: "Fecha", key: "Fecha" },
+        { title: "Pozo", key: "PozoNombre" },
+        { title: "pH Medido", key: "pHMedido", align: "end" },
+        { title: "CE Medido", key: "CEMedido", align: "end" },
+        { title: "STD Medido", key: "STDmedido", align: "end" },
+        { title: "SO4 Medido", key: "SO4medido", align: "end" },
+        { title: "Cu Medido", key: "CuMedido", align: "end" },
+        { title: "Acciones", key: "Acciones", sortable: false },
       ],
       // Datos de ejemplo, remplazar con datos reales obtenidos de la base de datos
       mediciones: [],
@@ -159,15 +161,65 @@ export default {
         }
       );
     },
+    async sincronizarMediciones() {
+      console.log(`sincronizarMediciones`);
+
+      // Solicitar el token
+      window.electronAPI.send("solicitar-token");
+
+      try {
+        // Esperar por el token
+        const tokenResult = await new Promise((resolve, reject) => {
+          const removeListener = window.electronAPI.receive(
+            "cargar-token",
+            (result) => {
+              if (result.error) {
+                reject(result.error);
+              } else {
+                console.log(`cargar-token`, result);
+                removeListener();
+                resolve(result.accessToken);
+              }
+            }
+          );
+        });
+
+        // Una vez que tenemos el token, solicitamos los emails
+        window.electronAPI.send("solicitar-emails", {
+          accessToken: tokenResult,
+        });
+
+        // Esperar por los emails
+        const emailsResult = await new Promise((resolve, reject) => {
+          const removeListenerEmails = window.electronAPI.receive(
+            "cargar-emails",
+            (result) => {
+              if (result.error) {
+                reject(result.error);
+              } else {
+                console.log(`cargar-emails`, result.messages);
+                removeListenerEmails();
+                resolve(result.messages);
+              }
+            }
+          );
+        });
+
+        // Aquí puedes hacer algo con los emails recibidos
+        console.log(emailsResult);
+      } catch (error) {
+        console.error("Error en sincronizarMediciones:", error);
+      }
+    },
     async mostrarFormularioAgregar() {
       this.medicionActual = {}; // Resetear medicionActual para un nuevo medicion
       this.mostrarFormulario = true;
     },
-    async editarPozo(medicion) {
+    async editarMedicion(medicion) {
       this.medicionActual = { ...medicion }; // Copiar el medicion a editar en medicionActual
       this.mostrarFormulario = true;
     },
-    async insertarPozo() {
+    async insertarMedicion() {
       if (this.medicionActual.MedicionId) {
         const medicionDataSimplificado = {
           MedicionId: this.medicionActual.MedicionId,
