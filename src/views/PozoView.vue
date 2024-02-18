@@ -90,18 +90,20 @@ export default {
         datosRef,
         (snapshot) => {
           const data = snapshot.val();
-          const pozosArray = Object.keys(data).map((key) => ({
-            ...data[key],
-            id: key, // Aquí asignas la clave única de Firebase a cada pozo
-          }));
-          this.pozos = pozosArray;
+          if (data) {
+            // Verifica si data no es null
+            const pozosArray = Object.keys(data).map((key) => ({
+              ...data[key],
+              id: key, // Asigna la clave única de Firebase a cada medición
+            }));
+            this.pozos = pozosArray;
+          }
         },
         {
           onlyOnce: true,
         }
       );
     },
-
     mostrarFormularioAgregar() {
       this.pozoActual = {}; // Resetear pozoActual para un nuevo pozo
       this.mostrarFormulario = true;
@@ -111,12 +113,12 @@ export default {
       this.mostrarFormulario = true;
     },
     async insertarPozo() {
-      if (this.pozoActual.id) {
-        const data = {
-          Nombre: this.pozoActual.Nombre,
-          Tipo: this.pozoActual.Tipo,
-        };
+      const data = {
+        Nombre: this.pozoActual.Nombre,
+        Tipo: this.pozoActual.Tipo,
+      };
 
+      if (this.pozoActual.id) {
         set(ref(database, "pozos/" + this.pozoActual.id), data)
           .then(() => {
             console.log("Datos guardados correctamente.");
@@ -125,11 +127,6 @@ export default {
             console.log("Error al guardar datos: ", error);
           });
       } else {
-        const data = {
-          Nombre: this.pozoActual.Nombre,
-          Tipo: this.pozoActual.Tipo,
-        };
-
         // Crea una nueva referencia con un ID único en la colección "pozos"
         const nuevaRef = push(ref(database, "pozos"));
 

@@ -3,11 +3,6 @@
 import { app, protocol, BrowserWindow, ipcMain } from "electron";
 import { createProtocol } from "vue-cli-plugin-electron-builder/lib";
 import installExtension, { VUEJS3_DEVTOOLS } from "electron-devtools-installer";
-const { registerPozoHandlers } = require("./ipcHandlers/pozosHandlers");
-const { registerMedicionHandlers } = require("./ipcHandlers/MedicionesHandlers");
-const { registerEmailHandlers } = require("./ipcHandlers/emailsHandlers");
-
-const path = require("path");
 
 const isDevelopment = process.env.NODE_ENV !== "production";
 
@@ -19,14 +14,8 @@ protocol.registerSchemesAsPrivileged([
 async function createWindow() {
   // Create the browser window.
   const win = new BrowserWindow({
-    width: 800,
-    height: 600,
-    webPreferences: {
-      preload: path.join(__dirname, "preload.js"), // Asegúrate de que la ruta sea correcta
-      contextIsolation: true,
-      enableRemoteModule: false,
-      nodeIntegration: false,
-    },
+    width: 1280,
+    height: 1080,
   });
 
   if (process.env.WEBPACK_DEV_SERVER_URL) {
@@ -68,10 +57,6 @@ app.on("ready", async () => {
     }
   }
   createWindow();
-
-  registerPozoHandlers();
-  registerMedicionHandlers();
-  registerEmailHandlers();
 });
 
 // Exit cleanly on request from parent process in development mode.

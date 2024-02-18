@@ -7,10 +7,6 @@ module.exports = defineConfig({
     vuetify: {
       // Configuración de Vuetify si es necesario
     },
-    electronBuilder: {
-      // Especifica la ubicación de tu archivo preload.js
-      preload: "src/preload.js",
-    },
   },
 
   // Añade esta sección para configurar Webpack
