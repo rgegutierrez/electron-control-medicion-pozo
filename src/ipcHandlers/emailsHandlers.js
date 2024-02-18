@@ -57,7 +57,7 @@ const registerEmailHandlers = () => {
   ipcMain.on("solicitar-emails", (event, { accessToken }) => {
     const options = {
       hostname: "graph.microsoft.com",
-      path: "v1.0/users/controlmedicionposo@outlook.com/messages",
+      path: "/v1.0/users/controlmedicionposo@outlook.com/messages",
       method: "GET",
       headers: {
         Authorization: `Bearer ${accessToken}`,

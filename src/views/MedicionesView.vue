@@ -4,7 +4,7 @@
     <v-btn color="primary" @click="mostrarFormularioAgregar"
       >Agregar Medición</v-btn
     >
-    <v-btn color="success" @click="sincronizarMediciones">Sincronizar</v-btn>
+    <v-btn color="success" @click="algo">Sincronizar</v-btn>
 
     <!-- Tabla de Mediciones -->
     <v-data-table
@@ -101,6 +101,9 @@
 </template>
 
 <script>
+import { database } from "../firebaseConfig";
+import { ref, set } from "firebase/database";
+
 export default {
   data() {
     return {
@@ -132,6 +135,19 @@ export default {
     console.log(`this.pozos`, this.pozos);
   },
   methods: {
+    algo() {
+      console.log(`algo`);
+      set(ref(database, "users/" + 1), {
+        username: "algo",
+        email: "algo@google.com",
+      })
+        .then(() => {
+          console.log("Datos guardados correctamente.");
+        })
+        .catch((error) => {
+          console.log("Error al guardar datos: ", error);
+        });
+    },
     async cargarPozos() {
       // Enviar un mensaje al proceso principal para solicitar los datos de los pozos
       window.electronAPI.send("solicitar-pozos");

@@ -10,7 +10,7 @@
       :headers="headers"
       :items="pozos"
       class="elevation-1"
-      item-key="PozoId"
+      item-key="id"
     >
       <template v-slot:[`item.Acciones`]="{ item }">
         <v-btn icon @click="editarPozo(item)">
@@ -23,7 +23,7 @@
       <v-card>
         <v-card-title>
           <span class="headline"
-            >{{ pozoActual.PozoId ? "Editar" : "Agregar" }} Pozo</span
+            >{{ pozoActual.id ? "Editar" : "Agregar" }} Pozo</span
           >
         </v-card-title>
         <v-card-text>
@@ -56,12 +56,14 @@
 </template>
 
 <script>
+import { database } from "../firebaseConfig";
+import { ref, set, onValue, off, push } from "firebase/database";
+
 export default {
   data() {
     return {
       // Ajusta los headers para reflejar los datos de un pozo
       headers: [
-        { title: "Pozo ID", key: "PozoId" },
         { title: "Nombre", key: "Nombre" },
         { title: "Tipo", key: "Tipo" },
         { title: "Acciones", key: "Acciones", sortable: false },
@@ -74,24 +76,32 @@ export default {
       pozoActual: {},
     };
   },
-  async created() {
+  async mounted() {
     await this.cargarPozos();
+  },
+  unmounted() {
+    const datosRef = ref(database, "pozos/");
+    off(datosRef);
   },
   methods: {
     async cargarPozos() {
-      // Enviar un mensaje al proceso principal para solicitar los datos de los pozos
-      window.electronAPI.send("solicitar-pozos");
-
-      // Escuchar la respuesta con los datos de los pozos
-      const removeListener = window.electronAPI.receive(
-        "cargar-pozos",
-        (result) => {
-          console.log(`cargar-pozos`, result);
-          this.pozos = result.pozos; // Actualizar la propiedad pozos con los datos recibidos
-          removeListener();
+      const datosRef = ref(database, "pozos/");
+      onValue(
+        datosRef,
+        (snapshot) => {
+          const data = snapshot.val();
+          const pozosArray = Object.keys(data).map((key) => ({
+            ...data[key],
+            id: key, // Aquí asignas la clave única de Firebase a cada pozo
+          }));
+          this.pozos = pozosArray;
+        },
+        {
+          onlyOnce: true,
         }
       );
     },
+
     mostrarFormularioAgregar() {
       this.pozoActual = {}; // Resetear pozoActual para un nuevo pozo
       this.mostrarFormulario = true;
@@ -101,38 +111,36 @@ export default {
       this.mostrarFormulario = true;
     },
     async insertarPozo() {
-      if (this.pozoActual.PozoId) {
-        const pozoDataSimplificado = {
-          PozoId: this.pozoActual.PozoId,
+      if (this.pozoActual.id) {
+        const data = {
           Nombre: this.pozoActual.Nombre,
           Tipo: this.pozoActual.Tipo,
-          // Incluye otras propiedades necesarias que sean serializables
         };
 
-        // Actualizar pozo existente
-        window.electronAPI.send("actualizar-pozo", pozoDataSimplificado);
-
-        const removeListener = window.electronAPI.receive(
-          "pozo-actualizado",
-          (arg) => {
-            console.log(arg); // arg contiene la respuesta del proceso principal, por ejemplo, el ID del pozo actualizado
-            removeListener();
-          }
-        );
+        set(ref(database, "pozos/" + this.pozoActual.id), data)
+          .then(() => {
+            console.log("Datos guardados correctamente.");
+          })
+          .catch((error) => {
+            console.log("Error al guardar datos: ", error);
+          });
       } else {
-        const pozoDataSimplificado = {
+        const data = {
           Nombre: this.pozoActual.Nombre,
           Tipo: this.pozoActual.Tipo,
-          // Incluye otras propiedades necesarias que sean serializables
         };
 
-        // Insertar nuevo pozo
-        window.electronAPI.send("insertar-pozo", pozoDataSimplificado);
+        // Crea una nueva referencia con un ID único en la colección "pozos"
+        const nuevaRef = push(ref(database, "pozos"));
 
-        const removeListener = window.electronAPI.receive("pozo-insertado", (arg) => {
-          console.log(arg); // arg contiene la respuesta del proceso principal, por ejemplo, el ID del pozo insertado
-          removeListener();
-        });
+        // Inserta los datos en la nueva referencia
+        set(nuevaRef, data)
+          .then(() => {
+            console.log("Datos insertados con ID único: ", nuevaRef.key);
+          })
+          .catch((error) => {
+            console.log("Error al insertar datos: ", error);
+          });
       }
 
       // Cerrar el formulario después de insertar/editar
