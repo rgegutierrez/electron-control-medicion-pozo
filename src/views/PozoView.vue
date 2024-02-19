@@ -29,9 +29,22 @@
     <v-data-table
       :headers="headers"
       :items="pozos"
+      :items-per-page="10"
+      :items-per-page-options="[10, 30, 50, 100, -1]"
       class="elevation-1"
       item-key="id"
     >
+      <template v-slot:[`top`]="{ pagination, options, updateOptions }">
+        <v-data-table-footer
+          class="border-bottom"
+          :pagination="pagination"
+          :options="options"
+          @update:options="updateOptions"
+          items-per-page-text="$vuetify.dataTable.itemsPerPageText"
+        >
+        </v-data-table-footer>
+      </template>
+
       <!-- Nombre -->
       <template v-slot:[`item.Nombre`]="{ item }">
         <span style="font-weight: bold">{{ item.Nombre }}</span>
@@ -184,6 +197,8 @@ export default {
               id: key, // Asigna la clave única de Firebase a cada medición
             }));
             this.pozos = pozosArray;
+          } else {
+            this.pozos = [];
           }
         },
         {
@@ -240,3 +255,9 @@ export default {
   },
 };
 </script>
+<style>
+.border-bottom {
+  border-top: none !important;
+  border-bottom: thin solid rgba(0, 0, 0, 0.12) !important;
+}
+</style>

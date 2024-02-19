@@ -24,3 +24,9 @@ export default {
   },
 };
 </script>
+<style>
+.border-bottom {
+  border-top: none !important;
+  border-bottom: thin solid rgba(0, 0, 0, 0.12) !important;
+}
+</style>

@@ -29,9 +29,22 @@
     <v-data-table
       :headers="headers"
       :items="medicionesAnalitics"
+      :items-per-page="10"
+      :items-per-page-options="[10, 30, 50, 100, -1]"
       class="elevation-1"
       item-key="id"
     >
+      <template v-slot:[`top`]="{ pagination, options, updateOptions }">
+        <v-data-table-footer
+          class="border-bottom"
+          :pagination="pagination"
+          :options="options"
+          @update:options="updateOptions"
+          items-per-page-text="$vuetify.dataTable.itemsPerPageText"
+        >
+        </v-data-table-footer>
+      </template>
+
       <!-- Fecha -->
       <template v-slot:[`item.Fecha`]="{ item }">
         <span style="font-weight: bold">{{ item.Fecha }}</span>
@@ -238,7 +251,6 @@ export default {
               id: key, // Asigna la clave única de Firebase a cada medición
             }));
             this.pozos = pozosArray;
-            console.log(`pozos`, this.pozos);
           }
         },
         {
@@ -252,14 +264,15 @@ export default {
         datosRef,
         (snapshot) => {
           const data = snapshot.val();
+
           if (data) {
-            // Verifica si data no es null
             const medicionesArray = Object.keys(data).map((key) => ({
               ...data[key],
               id: key, // Asigna la clave única de Firebase a cada medición
             }));
             this.mediciones = medicionesArray;
-            console.log(`mediciones`, this.mediciones);
+          } else {
+            this.mediciones = [];
           }
         },
         {
@@ -276,8 +289,6 @@ export default {
       this.mostrarFormulario = true;
     },
     async insertarMedicion() {
-      console.log(`fecha`, this.medicionActual.Fecha);
-
       const data = {
         Pozo: this.medicionActual.Pozo,
         Fecha: this.medicionActual.Fecha,
@@ -374,3 +385,9 @@ export default {
   },
 };
 </script>
+<style>
+.border-bottom {
+  border-top: none !important;
+  border-bottom: thin solid rgba(0, 0, 0, 0.12) !important;
+}
+</style>
