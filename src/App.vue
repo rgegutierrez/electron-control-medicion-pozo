@@ -29,6 +29,12 @@
           >
           </v-list-item>
           <v-list-item
+            to="/carga-datos-insitu"
+            title="Carga Archivo In Situ"
+            prepend-icon="mdi-view-dashboard"
+          >
+          </v-list-item>
+          <v-list-item
             to="/pozo"
             title="Pozos"
             prepend-icon="mdi-view-dashboard"
@@ -36,11 +42,11 @@
           </v-list-item>
         </v-list>
 
-        <template v-slot:append>
+        <!-- <template v-slot:append>
           <div class="pa-2">
             <v-btn block> Logout </v-btn>
           </div>
-        </template>
+        </template> -->
       </v-navigation-drawer>
       <v-main>
         <router-view></router-view>
