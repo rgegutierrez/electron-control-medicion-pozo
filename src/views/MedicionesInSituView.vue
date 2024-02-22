@@ -1,6 +1,6 @@
 <template>
   <v-container>
-    <v-toolbar border title="Mediciones" class="mb-2">
+    <v-toolbar border title="Mediciones In Situ" class="mb-2">
       <v-row class="fill-height">
         <v-col class="d-flex justify-end">
           <v-btn
@@ -50,6 +50,11 @@
         <span style="font-weight: bold">{{ item.Fecha }}</span>
       </template>
 
+      <!-- Hora -->
+      <template v-slot:[`item.Hora`]="{ item }">
+        <span style="font-weight: bold">{{ item.Hora }}</span>
+      </template>
+
       <!-- Pozo -->
       <template v-slot:[`item.Pozo`]="{ item }">
         <span style="font-weight: bold">{{ item.Pozo }}</span>
@@ -78,24 +83,27 @@
         }}</span>
       </template>
 
-      <!-- SO4 Medido -->
-      <template v-slot:[`item.SO4Medido`]="{ item }">
-        <span :style="{ color: item.SO4Color }" :title="`> ${item.SO4}`">{{
-          item.SO4Medido
-        }}</span>
+      <!-- Salinidad Medido -->
+      <template v-slot:[`item.SalinidadMedido`]="{ item }">
+        <span
+          :style="{ color: item.SalColor }"
+          :title="`> ${item.Salinidad}`"
+          >{{ item.SalinidadMedido }}</span
+        >
       </template>
 
-      <!-- Cu Medido -->
-      <template v-slot:[`item.CuMedido`]="{ item }">
+      <!-- NivelFreatico Medido -->
+      <template v-slot:[`item.NivelFreaticoMedido`]="{ item }">
         <span
-          :style="{ color: item.CuColor }"
-          :title="`> ${item.CuDisuelto}`"
-          >{{ item.CuMedido }}</span
+          :style="{ color: item.NFColor }"
+          :title="`> ${item.NivelFreatico}`"
+          >{{ item.NivelFreaticoMedido }}</span
         >
       </template>
 
       <template v-slot:[`item.Acciones`]="{ item }">
         <v-btn
+          v-if="item.error"
           variant="tonal"
           icon
           color="primary"
@@ -135,42 +143,32 @@
               <v-text-field
                 label="pH Medido"
                 v-model="medicionActual.pHMedido"
-                type="number"
-                min="0"
-                required
               ></v-text-field>
 
               <v-text-field
                 label="CE Medido"
                 v-model="medicionActual.CEMedido"
-                type="number"
-                min="0"
-                required
               ></v-text-field>
 
               <v-text-field
                 label="STD Medido"
                 v-model="medicionActual.STDMedido"
-                type="number"
-                min="0"
-                required
               ></v-text-field>
 
               <v-text-field
-                label="SO4 Medido"
-                v-model="medicionActual.SO4Medido"
-                type="number"
-                min="0"
-                required
+                label="Salinidad Medido"
+                v-model="medicionActual.SalinidadMedido"
               ></v-text-field>
 
               <v-text-field
-                label="Cu Medido"
-                v-model="medicionActual.CuMedido"
-                type="number"
-                min="0"
-                required
+                label="Nivel Freático Medido"
+                v-model="medicionActual.NivelFreaticoMedido"
               ></v-text-field>
+
+              <v-textarea
+                label="Observaciones"
+                v-model="medicionActual.Observaciones"
+              ></v-textarea>
             </v-form>
           </v-container>
         </v-card-text>
@@ -200,16 +198,20 @@ import { ref, set, onValue, off, push } from "firebase/database";
 export default {
   data() {
     return {
-      // Ajusta los headers para reflejar los datos de un medicion
       headers: [
-        { title: "Fecha", key: "Fecha" },
-        { title: "Pozo", key: "Pozo" },
-        { title: "Criticidad", key: "Tipo" },
+        { title: "Fecha", key: "Fecha", width: "120px" },
+        { title: "Hora", key: "Hora" },
+        { title: "Pozo", key: "Pozo", width: "200px" },
         { title: "pH Medido", key: "pHMedido", align: "end" },
         { title: "CE Medido (µS/cm)", key: "CEMedido", align: "end" },
         { title: "STD Medido (mg/l)", key: "STDMedido", align: "end" },
-        { title: "SO4 Medido (mg/l)", key: "SO4Medido", align: "end" },
-        { title: "Cu Medido (mg/l)", key: "CuMedido", align: "end" },
+        { title: "Salinidad (%)", key: "SalinidadMedido", align: "end" },
+        {
+          title: "Nivel Freático (m.s.n.m.)",
+          key: "NivelFreaticoMedido",
+          align: "end",
+        },
+        { title: "Observaciones", key: "Observaciones" },
         { title: "Acciones", key: "Acciones", sortable: false },
       ],
       // Datos de ejemplo, remplazar con datos reales obtenidos de la base de datos
@@ -226,7 +228,7 @@ export default {
     await this.cargarPozos();
   },
   unmounted() {
-    const datosRef = ref(database, "mediciones/");
+    const datosRef = ref(database, "mediciones-insitu/");
     off(datosRef);
 
     const datosRefPozo = ref(database, "pozos/");
@@ -259,7 +261,7 @@ export default {
       );
     },
     async recargar() {
-      const datosRef = ref(database, "mediciones/");
+      const datosRef = ref(database, "mediciones-insitu/");
       onValue(
         datosRef,
         (snapshot) => {
@@ -293,15 +295,28 @@ export default {
         Pozo: this.medicionActual.Pozo,
         Fecha: this.medicionActual.Fecha,
         Mes: this.medicionActual.Fecha.substring(0, 7),
+        Hora:
+          this.medicionActual.Hora === undefined
+            ? ""
+            : this.medicionActual.Hora,
         pHMedido: this.convertirANullODecimal(this.medicionActual.pHMedido),
         CEMedido: this.convertirANullODecimal(this.medicionActual.CEMedido),
         STDMedido: this.convertirANullODecimal(this.medicionActual.STDMedido),
-        SO4Medido: this.convertirANullODecimal(this.medicionActual.SO4Medido),
-        CuMedido: this.convertirANullODecimal(this.medicionActual.CuMedido),
+        SalinidadMedido: this.convertirANullODecimal(
+          this.medicionActual.SalinidadMedido
+        ),
+        NivelFreaticoMedido: this.convertirANullODecimal(
+          this.medicionActual.NivelFreaticoMedido
+        ),
+        Observaciones: this.medicionActual.Observaciones === undefined
+            ? ""
+            : this.medicionActual.Observaciones,
       };
 
+      console.log(`DATA`, data);
+
       if (this.medicionActual.id) {
-        set(ref(database, "mediciones/" + this.medicionActual.id), data)
+        set(ref(database, "mediciones-insitu/" + this.medicionActual.id), data)
           .then(() => {
             console.log("Datos guardados correctamente.");
           })
@@ -309,8 +324,8 @@ export default {
             console.log("Error al guardar datos: ", error);
           });
       } else {
-        // Crea una nueva referencia con un ID único en la colección "mediciones"
-        const nuevaRef = push(ref(database, "mediciones"));
+        // Crea una nueva referencia con un ID único en la colección "mediciones-insitu"
+        const nuevaRef = push(ref(database, "mediciones-insitu"));
 
         // Inserta los datos en la nueva referencia
         set(nuevaRef, data)

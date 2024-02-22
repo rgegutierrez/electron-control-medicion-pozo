@@ -71,6 +71,11 @@
         <span style="font-weight: bold">{{ item.Fecha }}</span>
       </template>
 
+      <!-- Hora -->
+      <template v-slot:[`item.Hora`]="{ item }">
+        <span style="font-weight: bold">{{ item.Hora }}</span>
+      </template>
+
       <!-- Pozo -->
       <template v-slot:[`item.Pozo`]="{ item }">
         <span style="font-weight: bold">{{ item.Pozo }}</span>
@@ -209,7 +214,7 @@
 
 <script>
 import { database } from "../firebaseConfig";
-import { ref, set, onValue, off, push } from "firebase/database";
+import { ref, set, onValue, off, push, remove } from "firebase/database";
 
 import * as XLSX from "xlsx";
 
@@ -218,8 +223,9 @@ export default {
     return {
       // Ajusta los headers para reflejar los datos de un medicion
       headers: [
-        { title: "Fecha", key: "Fecha" },
-        { title: "Pozo", key: "Pozo" },
+        { title: "Fecha", key: "Fecha", width: "120px" },
+        { title: "Hora", key: "Hora" },
+        { title: "Pozo", key: "Pozo", width: "200px" },
         { title: "pH Medido", key: "pHMedido", align: "end" },
         { title: "CE Medido (µS/cm)", key: "CEMedido", align: "end" },
         { title: "STD Medido (mg/l)", key: "STDMedido", align: "end" },
@@ -255,6 +261,24 @@ export default {
   },
   methods: {
     async cargarDatos() {
+      const promesaEliminar = new Promise((resolve, reject) => {
+        // Referencia al nodo que deseas eliminar
+        const refEliminar = ref(database, "mediciones-insitu");
+
+        // Elimina el nodo
+        remove(refEliminar)
+          .then(() => {
+            console.log("Nodo eliminado exitosamente.");
+            resolve("Nodo eliminado exitosamente."); // Resuelve la promesa indicando éxito
+          })
+          .catch((error) => {
+            console.error("Error al eliminar nodo: ", error);
+            reject(error); // Rechaza la promesa si hay un error
+          });
+      });
+
+      await Promise.all([promesaEliminar]);
+
       this.estaCargando = true; // Inicia el indicador de carga
 
       // Array para almacenar todas las promesas creadas por las inserciones de datos
@@ -266,12 +290,15 @@ export default {
           Fecha: item.Fecha,
           Mes: item.Mes,
           Hora: item.Hora,
-          pHMedido: item.pHMedido,
-          CEMedido: item.CEMedido,
-          STDMedido: item.STDMedido,
-          SalinidadMedido: item.SalinidadMedido,
-          NivelFreaticoMedido: item.NivelFreaticoMedido,
-          Observaciones: item.Observaciones,
+          pHMedido: this.convertirANullODecimal(item.pHMedido),
+          CEMedido: this.convertirANullODecimal(item.CEMedido),
+          STDMedido: this.convertirANullODecimal(item.STDMedido),
+          SalinidadMedido: this.convertirANullODecimal(item.SalinidadMedido),
+          NivelFreaticoMedido: this.convertirANullODecimal(
+            item.NivelFreaticoMedido
+          ),
+          Observaciones:
+            item.Observaciones === undefined ? "" : item.Observaciones,
         };
 
         // Crea una promesa para la inserción de cada item y la añade al array de promesas
@@ -305,6 +332,9 @@ export default {
       this.estaCargando = false; // Inicia el indicador de carga
     },
     convertirANullODecimal(valor) {
+      if (valor === undefined) {
+        return null;
+      }
       // Convierte el valor a decimal si es posible; de lo contrario, devuelve null
       const numero = Number(valor);
 
@@ -361,6 +391,31 @@ export default {
       // Cerrar el formulario después de insertar/editar
       this.mostrarFormulario = false;
     },
+    excelTimeToReadable(timeDecimal) {
+      // Convertir el decimal a horas totales
+      const hoursTotal = timeDecimal * 24;
+      const hours = Math.floor(hoursTotal);
+
+      // Convertir la parte decimal de las horas a minutos
+      const minutesTotal = (hoursTotal - hours) * 60;
+      const minutes = Math.floor(minutesTotal);
+
+      // Convertir la parte decimal de los minutos a segundos
+      const seconds = Math.floor((minutesTotal - minutes) * 60);
+
+      // Formatear a HH:MM:SS, asegurándose de que cada componente tenga dos dígitos
+      const formattedTime = [
+        hours.toString().padStart(2, "0"),
+        minutes.toString().padStart(2, "0"),
+        seconds.toString().padStart(2, "0"),
+      ].join(":");
+
+      if (formattedTime === "NaN:NaN:NaN") {
+        return null;
+      }
+
+      return formattedTime;
+    },
     excelSerialDateToJSDate(serial) {
       const fechaBase = new Date(1899, 11, 30); // La fecha base es el 30 de diciembre de 1899
       const dias = serial;
@@ -397,7 +452,7 @@ export default {
       for (const name of workbook.SheetNames) {
         const PozoObj = this.pozos.find(
           (item) =>
-            name.trim().replace(" ", "") === item.Nombre.replace(" ", "")
+            name.trim().replaceAll(" ", "") === item.Nombre.replaceAll(" ", "")
         );
         if (!PozoObj) {
           console.error(`No se encontró el pozo ${name}`);
@@ -473,7 +528,8 @@ export default {
       };
 
       let fecha = "";
-      let NV = "";
+      let NV = 0;
+      // let vamosAUsarElNVAnterior = false;
 
       const datosFiltrados = data.slice(1).reduce((acumulador, fila, index) => {
         // Inicializa el objeto que potencialmente agregaremos al acumulador
@@ -486,19 +542,14 @@ export default {
           const nombreColumnaAmigable = mapeoColumnas[columna];
 
           if (columna === "Fecha") {
-            if (Pozo === "PM-08") {
-              console.log(
-                `fila[indicesDeColumnas[columna]]`,
-                fila[indicesDeColumnas[columna]]
-              );
-            }
-
             let fechaAux = fila[indicesDeColumnas[columna]];
 
             if (fechaAux === undefined && index > indexFila) {
               fechaAux = fecha;
+              // vamosAUsarElNVAnterior = true;
             } else {
               fecha = fila[indicesDeColumnas[columna]];
+              // vamosAUsarElNVAnterior = false;
             }
 
             let fechaConvertida = this.excelSerialDateToJSDate(fechaAux);
@@ -519,9 +570,14 @@ export default {
               fila[indicesDeColumnas[columna]];
           }
 
+          if (columna === "Hora") {
+            filaFiltrada[nombreColumnaAmigable] = this.excelTimeToReadable(
+              fila[indicesDeColumnas[columna]]
+            );
+          }
+
           //TODO
           if (columna === "Nivel Freático") {
-            console.log(`---------NV`, fila[indicesDeColumnas[columna]]);
             let NVAux = fila[indicesDeColumnas[columna]];
 
             if (NVAux === undefined && index > indexFila) {
@@ -530,8 +586,11 @@ export default {
               NV = fila[indicesDeColumnas[columna]];
             }
 
-            filaFiltrada[nombreColumnaAmigable] =
-              fila[indicesDeColumnas[columna]];
+            if (filaFiltrada["pHMedido"] !== undefined) {
+              filaFiltrada[nombreColumnaAmigable] = NVAux;
+            } else {
+              filaFiltrada[nombreColumnaAmigable] = undefined;
+            }
           }
         });
 

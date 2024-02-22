@@ -17,6 +17,12 @@
           >
           </v-list-item>
           <v-list-item
+            to="/insitu"
+            title="Mediciones In Situ"
+            prepend-icon="mdi-view-dashboard"
+          >
+          </v-list-item>
+          <v-list-item
             to="/dashboard"
             title="Dashboard"
             prepend-icon="mdi-view-dashboard"
