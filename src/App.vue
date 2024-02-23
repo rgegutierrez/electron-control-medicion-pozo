@@ -10,41 +10,29 @@
               >
             </v-list-item-content>
           </v-list-item>
-          <v-list-item
-            to="/"
-            title="Mediciones"
-            prepend-icon="mdi-view-dashboard"
-          >
+          <v-list-item to="/">
+            <v-icon icon="$next" />
+            Mediciones
           </v-list-item>
-          <v-list-item
-            to="/insitu"
-            title="Mediciones In Situ"
-            prepend-icon="mdi-view-dashboard"
-          >
+          <v-list-item to="/insitu">
+            <v-icon icon="$next" />
+            Mediciones In Situ
           </v-list-item>
-          <v-list-item
-            to="/dashboard"
-            title="Dashboard"
-            prepend-icon="mdi-view-dashboard"
-          >
+          <v-list-item to="/dashboard">
+            <v-icon icon="$next" />
+            Dashboard
           </v-list-item>
-          <v-list-item
-            to="/carga-datos"
-            title="Carga Archivo"
-            prepend-icon="mdi-view-dashboard"
-          >
+          <v-list-item to="/carga-datos">
+            <v-icon icon="$next" />
+            Carga Archivo
           </v-list-item>
-          <v-list-item
-            to="/carga-datos-insitu"
-            title="Carga Archivo In Situ"
-            prepend-icon="mdi-view-dashboard"
-          >
+          <v-list-item to="/carga-datos-insitu">
+            <v-icon icon="$next" />
+            Carga Archivo In Situ
           </v-list-item>
-          <v-list-item
-            to="/pozo"
-            title="Pozos"
-            prepend-icon="mdi-view-dashboard"
-          >
+          <v-list-item to="/pozo">
+            <v-icon icon="$next" />
+            Pozos
           </v-list-item>
         </v-list>
 

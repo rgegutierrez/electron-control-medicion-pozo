@@ -3,22 +3,17 @@
     <v-toolbar border title="Mediciones" class="mb-2">
       <v-row class="fill-height">
         <v-col class="d-flex justify-end">
-          <v-btn
-            class="mx-2"
-            prepend-icon="mdi-reload"
-            variant="tonal"
-            color="primary"
-            @click="recargar"
-          >
+          <v-btn class="mx-2" variant="tonal" color="primary" @click="recargar">
+            <v-icon icon="$loading" />
             Recargar
           </v-btn>
           <v-btn
             class="mx-2"
-            prepend-icon="mdi-plus"
             variant="tonal"
             color="secondary"
             @click="agregarMedicion"
           >
+            <v-icon icon="$plus" />
             Agrega Medición
           </v-btn>
         </v-col>
@@ -101,7 +96,7 @@
           color="primary"
           @click="editarMedicion(item)"
         >
-          <v-icon>mdi-pencil</v-icon>
+          <v-icon icon="$edit" />
         </v-btn>
       </template>
     </v-data-table>
@@ -181,11 +176,11 @@
           >
           <v-btn
             variant="tonal"
-            prepend-icon="mdi-content-save"
             color="blue darken-1"
             text
             @click="insertarMedicion"
-            >Guardar</v-btn
+          >
+            <v-icon icon="$complete" />Guardar</v-btn
           >
         </v-card-actions>
       </v-card>
