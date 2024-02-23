@@ -25,6 +25,51 @@
       </v-row>
     </v-toolbar>
 
+
+    <v-container>
+      <v-row>
+        <v-col>
+          <v-text-field
+            v-model="mesInicio"
+            label="Mes de inicio"
+            type="month"
+          ></v-text-field>
+        </v-col>
+        <v-col>
+          <v-text-field
+            v-model="mesFin"
+            label="Mes de fin"
+            type="month"
+          ></v-text-field>
+        </v-col>
+        <v-col>
+          <v-autocomplete
+            label="Pozo"
+            :items="pozos"
+            item-title="Nombre"
+            item-value="Nombre"
+            hide-details="auto"
+            v-model="filtersHeader['Pozo']"
+            small-chips
+            dense
+            solo
+            clearable
+          ></v-autocomplete>
+        </v-col>
+        <v-col>
+          <!-- Botón para limpiar los filtros -->
+          <v-btn
+            class="my-2"
+            prepend-icon="mdi-close"
+            variant="tonal"
+            color="error"
+            @click="limpiarFiltros"
+            >Limpiar Filtros</v-btn
+          >
+        </v-col>
+      </v-row>
+    </v-container>
+
     <!-- Tabla de Mediciones -->
     <v-data-table
       :headers="headers"
@@ -103,7 +148,6 @@
 
       <template v-slot:[`item.Acciones`]="{ item }">
         <v-btn
-          v-if="item.error"
           variant="tonal"
           icon
           color="primary"
@@ -127,8 +171,8 @@
               <v-autocomplete
                 label="Pozo"
                 :items="pozos"
-                item-title="Nombre"
-                item-value="Nombre"
+                item-title="name"
+                item-value="name"
                 v-model="medicionActual.Pozo"
                 required
               ></v-autocomplete>
@@ -214,6 +258,11 @@ export default {
         { title: "Observaciones", key: "Observaciones" },
         { title: "Acciones", key: "Acciones", sortable: false },
       ],
+      filtersHeader: {},
+      dialogMesInicio: false,
+      dialogMesFin: false,
+      mesInicio: "",
+      mesFin: "",
       // Datos de ejemplo, remplazar con datos reales obtenidos de la base de datos
       mediciones: [],
       // Para controlar la visibilidad del formulario de agregar/editar
@@ -227,14 +276,60 @@ export default {
     await this.recargar();
     await this.cargarPozos();
   },
-  unmounted() {
+  async unmounted() {
     const datosRef = ref(database, "mediciones-insitu/");
     off(datosRef);
 
     const datosRefPozo = ref(database, "pozos/");
     off(datosRefPozo);
+
+    await this.calcularRangoFechas();
   },
   methods: {
+    limpiarFiltros() {
+      this.mesInicio = "";
+      this.mesFin = "";
+      this.filtersHeader["Pozo"] = null; // Asegúrate de que este sea el valor adecuado para "limpiar" el v-autocomplete
+
+      this.calcularRangoFechas();
+    },
+    calcularRangoFechas() {
+      if (this.mesInicio != "" && this.mesFin != "") {
+        return;
+      }
+
+      if (this.mediciones.length === 0) {
+        this.mesInicio = "";
+        this.mesFin = "";
+        console.log(`calcularRangoFechas`, this.mesInicio, this.mesFin);
+        return;
+      }
+
+      const fechas = this.mediciones.map((m) => m.Mes);
+      const mesInicio = fechas.reduce(
+        (min, p) => (p < min ? p : min),
+        fechas[0]
+      );
+      const mesFin = fechas.reduce((max, p) => (p > max ? p : max), fechas[0]);
+
+      this.mesInicio = mesInicio;
+      this.mesFin = mesFin;
+      console.log(`calcularRangoFechas`, this.mesInicio, this.mesFin);
+    },
+    getColumnValues(val) {
+      switch (val) {
+        case "vigencia":
+          return [
+            { name: "Activo", id: true },
+            { name: "Inactivo", id: false },
+          ];
+        default:
+          return this.pozos.map((d) => ({
+            name: d[val],
+            id: d[val],
+          }));
+      }
+    },
     convertirANullODecimal(valor) {
       // Convierte el valor a decimal si es posible; de lo contrario, devuelve null
       const numero = Number(valor);
@@ -273,6 +368,8 @@ export default {
               id: key, // Asigna la clave única de Firebase a cada medición
             }));
             this.mediciones = medicionesArray;
+
+            this.calcularRangoFechas();
           } else {
             this.mediciones = [];
           }
@@ -308,12 +405,11 @@ export default {
         NivelFreaticoMedido: this.convertirANullODecimal(
           this.medicionActual.NivelFreaticoMedido
         ),
-        Observaciones: this.medicionActual.Observaciones === undefined
+        Observaciones:
+          this.medicionActual.Observaciones === undefined
             ? ""
             : this.medicionActual.Observaciones,
       };
-
-      console.log(`DATA`, data);
 
       if (this.medicionActual.id) {
         set(ref(database, "mediciones-insitu/" + this.medicionActual.id), data)
@@ -344,58 +440,75 @@ export default {
   },
   computed: {
     medicionesAnalitics() {
-      return this.mediciones.map((medicion) => {
-        // Buscar el pozo correspondiente y excluir el campo id
-        const pozo = this.pozos.find(
-          (p) => p.Nombre.trim() === medicion.Pozo.trim()
-        );
-        if (pozo) {
-          const { id, ...restoPozo } = pozo;
-          console.log(id);
+      return this.mediciones
+        .filter((medicion) => {
+          const mesMedicion = medicion.Mes; // Asume que ya tienes una propiedad Mes en tu objeto
+          return mesMedicion >= this.mesInicio && mesMedicion <= this.mesFin;
+        })
+        .filter((d) => {
+          // Filtrar mediciones basadas en filtersHeader
+          return Object.keys(this.filtersHeader).every((f) => {
+            if (this.filtersHeader[f] == null) return true;
+            if (d[f] == null) return false;
+            return (
+              this.filtersHeader[f].toString().length < 1 ||
+              this.filtersHeader[f].toString() === d[f].toString()
+            );
+          });
+        })
+        .map((medicion) => {
+          // Buscar el pozo correspondiente y excluir el campo id
+          const pozo = this.pozos.find(
+            (p) => p.Nombre.trim() === medicion.Pozo.trim()
+          );
+          if (pozo) {
+            const { id, ...restoPozo } = pozo;
+            console.log(id);
 
-          // Inicializar propiedades de color
-          let pHColor = "",
-            CEColor = "",
-            STDColor = "",
-            SO4Color = "",
-            CuColor = "";
+            // Inicializar propiedades de color
+            let pHColor = "",
+              CEColor = "",
+              STDColor = "",
+              SO4Color = "",
+              CuColor = "";
 
-          // Verificar condiciones y asignar colores
-          if (
-            parseFloat(medicion.pHMedido) < parseFloat(restoPozo.pHInferior) ||
-            parseFloat(medicion.pHMedido) > parseFloat(restoPozo.pHSuperior)
-          ) {
-            pHColor = "red";
-          }
-          if (parseFloat(medicion.CEMedido) > parseFloat(restoPozo.CE)) {
-            CEColor = "red";
-          }
-          if (parseFloat(medicion.STDMedido) > parseFloat(restoPozo.STD)) {
-            STDColor = "red";
-          }
-          if (parseFloat(medicion.SO4Medido) > parseFloat(restoPozo.SO4)) {
-            SO4Color = "red";
-          }
-          if (
-            parseFloat(medicion.CuMedido) > parseFloat(restoPozo.CuDisuelto)
-          ) {
-            CuColor = "red";
-          }
+            // Verificar condiciones y asignar colores
+            if (
+              parseFloat(medicion.pHMedido) <
+                parseFloat(restoPozo.pHInferior) ||
+              parseFloat(medicion.pHMedido) > parseFloat(restoPozo.pHSuperior)
+            ) {
+              pHColor = "red";
+            }
+            if (parseFloat(medicion.CEMedido) > parseFloat(restoPozo.CE)) {
+              CEColor = "red";
+            }
+            if (parseFloat(medicion.STDMedido) > parseFloat(restoPozo.STD)) {
+              STDColor = "red";
+            }
+            if (parseFloat(medicion.SO4Medido) > parseFloat(restoPozo.SO4)) {
+              SO4Color = "red";
+            }
+            if (
+              parseFloat(medicion.CuMedido) > parseFloat(restoPozo.CuDisuelto)
+            ) {
+              CuColor = "red";
+            }
 
-          // Retornar nuevo objeto combinado con propiedades de color
-          return {
-            ...medicion,
-            ...restoPozo,
-            pHColor,
-            CEColor,
-            STDColor,
-            SO4Color,
-            CuColor,
-          };
-        }
-        // En caso de no encontrar el pozo, retornar solo la medicion
-        return medicion;
-      });
+            // Retornar nuevo objeto combinado con propiedades de color
+            return {
+              ...medicion,
+              ...restoPozo,
+              pHColor,
+              CEColor,
+              STDColor,
+              SO4Color,
+              CuColor,
+            };
+          }
+          // En caso de no encontrar el pozo, retornar solo la medicion
+          return medicion;
+        });
     },
   },
 };
