@@ -34,6 +34,10 @@
             <v-icon icon="$next" />
             Pozos
           </v-list-item>
+          <v-list-item to="/observacion">
+            <v-icon icon="$next" />
+            Observaciones
+          </v-list-item>
         </v-list>
 
         <!-- <template v-slot:append>
