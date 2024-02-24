@@ -136,7 +136,7 @@
       <!-- Salinidad Medido -->
       <template v-slot:[`item.SalinidadMedido`]="{ item }">
         <span
-          :style="{ color: item.SalColor }"
+          :style="{ color: item.SalinidadMedidoColor }"
           :title="`> ${item.Salinidad}`"
           >{{ item.SalinidadMedido }}</span
         >
@@ -145,7 +145,7 @@
       <!-- NivelFreatico Medido -->
       <template v-slot:[`item.NivelFreaticoMedido`]="{ item }">
         <span
-          :style="{ color: item.NFColor }"
+          :style="{ color: item.NivelFreaticoMedidoColor }"
           :title="`> ${item.NivelFreatico}`"
           >{{ item.NivelFreaticoMedido }}</span
         >
@@ -172,13 +172,14 @@
         </v-card-title>
         <v-card-text>
           <v-container>
-            <v-form>
+            <v-form ref="form">
               <v-autocomplete
                 label="Pozo"
                 :items="pozos"
-                item-title="name"
-                item-value="name"
+                item-title="Nombre"
+                item-value="Nombre"
                 v-model="medicionActual.Pozo"
+                :rules="reglasPozo"
                 required
               ></v-autocomplete>
 
@@ -186,32 +187,51 @@
                 label="Fecha"
                 v-model="medicionActual.Fecha"
                 type="date"
+                :rules="reglasFecha"
+                required
+              ></v-text-field>
+
+              <v-text-field
+                label="Hora"
+                v-model="medicionActual.Hora"
+                type="time"
+                :rules="reglasHora"
                 required
               ></v-text-field>
 
               <v-text-field
                 label="pH Medido"
                 v-model="medicionActual.pHMedido"
+                type="number"
+                min="0"
               ></v-text-field>
 
               <v-text-field
                 label="CE Medido"
                 v-model="medicionActual.CEMedido"
+                type="number"
+                min="0"
               ></v-text-field>
 
               <v-text-field
                 label="STD Medido"
                 v-model="medicionActual.STDMedido"
+                type="number"
+                min="0"
               ></v-text-field>
 
               <v-text-field
                 label="Salinidad Medido"
                 v-model="medicionActual.SalinidadMedido"
+                type="number"
+                min="0"
               ></v-text-field>
 
               <v-text-field
                 label="Nivel Freático Medido"
                 v-model="medicionActual.NivelFreaticoMedido"
+                type="number"
+                min="0"
               ></v-text-field>
 
               <v-textarea
@@ -281,6 +301,14 @@ export default {
       // Datos del medicion actual para agregar/editar
       medicionActual: {},
       pozos: [],
+      reglasPozo: [(v) => !!v || "El campo Pozo es requerido."],
+      reglasFecha: [(v) => !!v || "El campo Fecha es requerido."],
+      reglasHora: [
+        (v) => !!v || "El campo Hora es requerido.",
+        (v) =>
+          /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(v) ||
+          "El formato de hora debe ser HH:mm.",
+      ],
     };
   },
   async mounted() {
@@ -465,54 +493,65 @@ export default {
       this.mostrarFormulario = true;
     },
     async insertarMedicion() {
-      const data = {
-        Pozo: this.medicionActual.Pozo,
-        Fecha: this.medicionActual.Fecha,
-        Mes: this.medicionActual.Fecha.substring(0, 7),
-        Hora:
-          this.medicionActual.Hora === undefined
-            ? ""
-            : this.medicionActual.Hora,
-        pHMedido: this.convertirANullODecimal(this.medicionActual.pHMedido),
-        CEMedido: this.convertirANullODecimal(this.medicionActual.CEMedido),
-        STDMedido: this.convertirANullODecimal(this.medicionActual.STDMedido),
-        SalinidadMedido: this.convertirANullODecimal(
-          this.medicionActual.SalinidadMedido
-        ),
-        NivelFreaticoMedido: this.convertirANullODecimal(
-          this.medicionActual.NivelFreaticoMedido
-        ),
-        Observaciones:
-          this.medicionActual.Observaciones === undefined
-            ? ""
-            : this.medicionActual.Observaciones,
-      };
+      this.$refs.form.validate().then(({ valid: isValid }) => {
+        if (isValid) {
+          const data = {
+            Pozo: this.medicionActual.Pozo,
+            Fecha: this.medicionActual.Fecha,
+            Mes: this.medicionActual.Fecha.substring(0, 7),
+            Hora:
+              this.medicionActual.Hora === undefined
+                ? ""
+                : `${this.medicionActual.Hora}:00`,
+            pHMedido: this.convertirANullODecimal(this.medicionActual.pHMedido),
+            CEMedido: this.convertirANullODecimal(this.medicionActual.CEMedido),
+            STDMedido: this.convertirANullODecimal(
+              this.medicionActual.STDMedido
+            ),
+            SalinidadMedido: this.convertirANullODecimal(
+              this.medicionActual.SalinidadMedido
+            ),
+            NivelFreaticoMedido: this.convertirANullODecimal(
+              this.medicionActual.NivelFreaticoMedido
+            ),
+            Observaciones:
+              this.medicionActual.Observaciones === undefined
+                ? ""
+                : this.medicionActual.Observaciones,
+          };
 
-      if (this.medicionActual.id) {
-        set(ref(database, "mediciones-insitu/" + this.medicionActual.id), data)
-          .then(() => {
-            console.log("Datos guardados correctamente.");
-          })
-          .catch((error) => {
-            console.log("Error al guardar datos: ", error);
-          });
-      } else {
-        // Crea una nueva referencia con un ID único en la colección "mediciones-insitu"
-        const nuevaRef = push(ref(database, "mediciones-insitu"));
+          if (this.medicionActual.id) {
+            set(
+              ref(database, "mediciones-insitu/" + this.medicionActual.id),
+              data
+            )
+              .then(() => {
+                console.log("Datos guardados correctamente.");
+              })
+              .catch((error) => {
+                console.log("Error al guardar datos: ", error);
+              });
+          } else {
+            // Crea una nueva referencia con un ID único en la colección "mediciones-insitu"
+            const nuevaRef = push(ref(database, "mediciones-insitu"));
 
-        // Inserta los datos en la nueva referencia
-        set(nuevaRef, data)
-          .then(() => {
-            console.log("Datos insertados con ID único: ", nuevaRef.key);
-          })
-          .catch((error) => {
-            console.log("Error al insertar datos: ", error);
-          });
-      }
+            // Inserta los datos en la nueva referencia
+            set(nuevaRef, data)
+              .then(() => {
+                console.log("Datos insertados con ID único: ", nuevaRef.key);
+              })
+              .catch((error) => {
+                console.log("Error al insertar datos: ", error);
+              });
+          }
 
-      // Cerrar el formulario después de insertar/editar
-      this.mostrarFormulario = false;
-      await this.recargar();
+          // Cerrar el formulario después de insertar/editar
+          this.mostrarFormulario = false;
+          this.recargar();
+        } else {
+          console.log("El formulario tiene errores.");
+        }
+      });
     },
   },
   computed: {
@@ -546,8 +585,8 @@ export default {
             let pHMedidoColor = "",
               CEMedidoColor = "",
               STDMedidoColor = "",
-              SO4MedidoColor = "",
-              CuMedidoColor = "";
+              SalinidadMedidoColor = "",
+              NivelFreaticoMedidoColor = "";
 
             // Verificar condiciones y asignar colores
             if (
@@ -563,13 +602,17 @@ export default {
             if (parseFloat(medicion.STDMedido) > parseFloat(restoPozo.STD)) {
               STDMedidoColor = "red";
             }
-            if (parseFloat(medicion.SO4Medido) > parseFloat(restoPozo.SO4)) {
-              SO4MedidoColor = "red";
+            if (
+              parseFloat(medicion.SalinidadMedido) >
+              parseFloat(restoPozo.Salinidad)
+            ) {
+              SalinidadMedidoColor = "red";
             }
             if (
-              parseFloat(medicion.CuMedido) > parseFloat(restoPozo.CuDisuelto)
+              parseFloat(medicion.NivelFreaticoMedido) >
+              parseFloat(restoPozo.NivelFreatico)
             ) {
-              CuMedidoColor = "red";
+              NivelFreaticoMedidoColor = "red";
             }
 
             // Retornar nuevo objeto combinado con propiedades de color
@@ -579,8 +622,8 @@ export default {
               pHMedidoColor,
               CEMedidoColor,
               STDMedidoColor,
-              SO4MedidoColor,
-              CuMedidoColor,
+              SalinidadMedidoColor,
+              NivelFreaticoMedidoColor,
             };
           }
           // En caso de no encontrar el pozo, retornar solo la medicion
