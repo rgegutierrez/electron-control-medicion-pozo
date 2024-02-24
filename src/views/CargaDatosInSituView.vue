@@ -20,11 +20,11 @@
           <v-btn
             :disabled="tieneErrores"
             class="mx-2"
-            prepend-icon="mdi-content-save"
             variant="tonal"
             color="secondary"
             @click="cargarDatos"
           >
+            <v-icon icon="$complete" />
             Cargar Datos
           </v-btn>
         </v-col>
@@ -130,7 +130,7 @@
           color="primary"
           @click="editarMedicion(item)"
         >
-          <v-icon>mdi-pencil</v-icon>
+          <v-icon icon="$edit" />
         </v-btn>
       </template>
     </v-data-table>
@@ -200,11 +200,12 @@
           >
           <v-btn
             variant="tonal"
-            prepend-icon="mdi-content-save"
             color="blue darken-1"
             text
             @click="insertarMedicion"
-            >Guardar</v-btn
+          >
+            <v-icon icon="$complete" />
+            Guardar</v-btn
           >
         </v-card-actions>
       </v-card>

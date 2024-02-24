@@ -3,22 +3,17 @@
     <v-toolbar border title="Pozos" class="mb-2">
       <v-row class="fill-height">
         <v-col class="d-flex justify-end">
-          <v-btn
-            class="mx-2"
-            prepend-icon="mdi-reload"
-            variant="tonal"
-            color="primary"
-            @click="recargar"
-          >
+          <v-btn class="mx-2" variant="tonal" color="primary" @click="recargar">
+            <v-icon icon="$loading" />
             Recargar
           </v-btn>
           <v-btn
             class="mx-2"
-            prepend-icon="mdi-plus"
             variant="tonal"
             color="secondary"
             @click="agregarPozo"
           >
+            <v-icon icon="$plus" />
             Agrega Pozo
           </v-btn>
         </v-col>
@@ -57,7 +52,7 @@
 
       <template v-slot:[`item.Acciones`]="{ item }">
         <v-btn variant="tonal" icon color="primary" @click="editarPozo(item)">
-          <v-icon>mdi-pencil</v-icon>
+          <v-icon icon="$edit" />
         </v-btn>
       </template>
     </v-data-table>
@@ -132,11 +127,12 @@
           >
           <v-btn
             variant="tonal"
-            prepend-icon="mdi-content-save"
             color="blue darken-1"
             text
             @click="insertarPozo"
-            >Guardar</v-btn
+          >
+            <v-icon icon="$complete" />
+            Guardar</v-btn
           >
         </v-card-actions>
       </v-card>

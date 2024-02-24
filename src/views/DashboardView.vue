@@ -5,10 +5,10 @@
         <v-col class="d-flex justify-end">
           <v-btn
             class="mx-2"
-            prepend-icon="mdi-reload"
             variant="tonal"
             color="primary"
           >
+            <v-icon icon="$loading" />
             Recargar
           </v-btn>
         </v-col>
