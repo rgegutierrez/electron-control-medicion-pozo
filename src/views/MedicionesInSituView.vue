@@ -5,26 +5,25 @@
         <v-col class="d-flex justify-end">
           <v-btn
             class="mx-2"
-            prepend-icon="mdi-reload"
             variant="tonal"
-            color="primary"
-            @click="recargar"
+            color="black"
+            @click="agregarMedicion"
           >
-            Recargar
+            <v-icon icon="$plus" />
+            Agrega Medición
           </v-btn>
           <v-btn
             class="mx-2"
-            prepend-icon="mdi-plus"
             variant="tonal"
             color="secondary"
-            @click="agregarMedicion"
+            @click="exportar"
           >
-            Agrega Medición
+            <v-icon icon="$file" />
+            Exportar
           </v-btn>
         </v-col>
       </v-row>
     </v-toolbar>
-
 
     <v-container>
       <v-row>
@@ -57,14 +56,18 @@
           ></v-autocomplete>
         </v-col>
         <v-col>
-          <!-- Botón para limpiar los filtros -->
+          <v-btn class="mx-2" variant="tonal" color="primary" @click="recargar">
+            <v-icon icon="$loading" />
+            Recargar
+          </v-btn>
           <v-btn
             class="my-2"
-            prepend-icon="mdi-close"
             variant="tonal"
             color="error"
             @click="limpiarFiltros"
-            >Limpiar Filtros</v-btn
+          >
+            <v-icon icon="$close" />
+            Limpiar</v-btn
           >
         </v-col>
       </v-row>
@@ -108,7 +111,7 @@
       <!-- pH Medido -->
       <template v-slot:[`item.pHMedido`]="{ item }">
         <span
-          :style="{ color: item.pHColor }"
+          :style="{ color: item.pHMedidoColor }"
           :title="`${item.pHInferior} - ${item.pHSuperior}`"
           >{{ item.pHMedido }}</span
         >
@@ -116,16 +119,18 @@
 
       <!-- CE Medido -->
       <template v-slot:[`item.CEMedido`]="{ item }">
-        <span :style="{ color: item.CEColor }" :title="`> ${item.CE}`">{{
+        <span :style="{ color: item.CEMedidoColor }" :title="`> ${item.CE}`">{{
           item.CEMedido
         }}</span>
       </template>
 
       <!-- STD Medido -->
       <template v-slot:[`item.STDMedido`]="{ item }">
-        <span :style="{ color: item.STDColor }" :title="`> ${item.STD}`">{{
-          item.STDMedido
-        }}</span>
+        <span
+          :style="{ color: item.STDMedidoColor }"
+          :title="`> ${item.STD}`"
+          >{{ item.STDMedido }}</span
+        >
       </template>
 
       <!-- Salinidad Medido -->
@@ -153,7 +158,7 @@
           color="primary"
           @click="editarMedicion(item)"
         >
-          <v-icon>mdi-pencil</v-icon>
+          <v-icon icon="$edit" />
         </v-btn>
       </template>
     </v-data-table>
@@ -223,12 +228,12 @@
           >
           <v-btn
             variant="tonal"
-            prepend-icon="mdi-content-save"
             color="blue darken-1"
             text
             @click="insertarMedicion"
-            >Guardar</v-btn
           >
+            <v-icon icon="$complete" />Guardar
+          </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -243,19 +248,25 @@ export default {
   data() {
     return {
       headers: [
-        { title: "Fecha", key: "Fecha", width: "120px" },
-        { title: "Hora", key: "Hora" },
-        { title: "Pozo", key: "Pozo", width: "200px" },
-        { title: "pH Medido", key: "pHMedido", align: "end" },
-        { title: "CE Medido (µS/cm)", key: "CEMedido", align: "end" },
-        { title: "STD Medido (mg/l)", key: "STDMedido", align: "end" },
-        { title: "Salinidad (%)", key: "SalinidadMedido", align: "end" },
+        { title: "Fecha", key: "Fecha", width: "120px", t: "s" },
+        { title: "Hora", key: "Hora", t: "s" },
+        { title: "Pozo", key: "Pozo", width: "200px", t: "s" },
+        { title: "pH Medido", key: "pHMedido", align: "end", t: "n" },
+        { title: "CE Medido (µS/cm)", key: "CEMedido", align: "end", t: "n" },
+        { title: "STD Medido (mg/l)", key: "STDMedido", align: "end", t: "n" },
+        {
+          title: "Salinidad (%)",
+          key: "SalinidadMedido",
+          align: "end",
+          t: "n",
+        },
         {
           title: "Nivel Freático (m.s.n.m.)",
           key: "NivelFreaticoMedido",
           align: "end",
+          t: "n",
         },
-        { title: "Observaciones", key: "Observaciones" },
+        { title: "Observaciones", key: "Observaciones", t: "s" },
         { title: "Acciones", key: "Acciones", sortable: false },
       ],
       filtersHeader: {},
@@ -301,7 +312,6 @@ export default {
       if (this.mediciones.length === 0) {
         this.mesInicio = "";
         this.mesFin = "";
-        console.log(`calcularRangoFechas`, this.mesInicio, this.mesFin);
         return;
       }
 
@@ -314,7 +324,6 @@ export default {
 
       this.mesInicio = mesInicio;
       this.mesFin = mesFin;
-      console.log(`calcularRangoFechas`, this.mesInicio, this.mesFin);
     },
     getColumnValues(val) {
       switch (val) {
@@ -354,6 +363,74 @@ export default {
           onlyOnce: true,
         }
       );
+    },
+    async exportar() {
+      const styleRed = { font: { bold: true, color: { rgb: "FF0000" } } };
+
+      const XLSX = require("xlsx-js-style");
+      // STEP 1: Create a new workbook
+      const wb = XLSX.utils.book_new();
+
+      // Filtrar headers para excluir 'Pozo' y 'Acciones'
+      const filteredHeaders = this.headers
+        .filter((h) => h.key !== "Pozo" && h.key !== "Acciones")
+        .map((h) => h.title);
+
+      // Por cada pozo en el array de pozos, crea una hoja de cálculo
+      this.pozos.forEach((pozo) => {
+        // Filtra mediciones para el pozo actual
+        const medicionesPozo = this.medicionesAnalitics.filter(
+          (m) => m.Pozo === pozo.Nombre
+        );
+
+        // Preparar los datos de las mediciones, excluyendo 'Pozo' y 'Acciones'
+        const wsData = [
+          filteredHeaders, // Encabezados ya filtrados
+          ...medicionesPozo.map((medicion) => {
+            return this.headers
+              .filter((h) => h.key !== "Pozo" && h.key !== "Acciones") // Excluyendo 'Pozo' y 'Acciones'
+              .map((h) => {
+                // Determinar si el campo debe tener el estilo rojo
+                let style = {};
+                if (medicion[`${h.key}Color`] === "red") {
+                  style = styleRed; // Aplica el estilo rojo si la propiedad Color es 'red'
+                }
+
+                return {
+                  v: medicion[h.key],
+                  t: h.t, // Tipo string
+                  s: style, // Estilo, que puede ser 'styleRed' o vacío
+                };
+              });
+          }),
+        ];
+
+        // Crea una hoja de cálculo a partir de los datos
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+        // Suponiendo que ws es tu hoja de trabajo
+        if (!ws["!cols"]) ws["!cols"] = [];
+        ws["!cols"][0] = { wch: 12 };
+        ws["!cols"][2] = { wch: 23 };
+        ws["!cols"][3] = { wch: 23 };
+        ws["!cols"][4] = { wch: 23 };
+        ws["!cols"][5] = { wch: 23 };
+        ws["!cols"][6] = { wch: 23 };
+        ws["!cols"][7] = { wch: 80 };
+
+        // Añade la hoja de cálculo al libro de trabajo
+        XLSX.utils.book_append_sheet(wb, ws, pozo.Nombre);
+      });
+
+      // Genera el archivo Excel
+      XLSX.writeFile(wb, `${this.obtenerFechaActual()} In Situ Mina.xlsx`);
+    },
+    obtenerFechaActual() {
+      const hoy = new Date();
+      const anio = hoy.getFullYear();
+      const mes = ("0" + (hoy.getMonth() + 1)).slice(-2); // Añade un '0' si es necesario y toma los últimos 2 caracteres
+      const dia = ("0" + hoy.getDate()).slice(-2); // Añade un '0' si es necesario y toma los últimos 2 caracteres
+      return `${anio}-${mes}-${dia}`;
     },
     async recargar() {
       const datosRef = ref(database, "mediciones-insitu/");
@@ -466,11 +543,11 @@ export default {
             console.log(id);
 
             // Inicializar propiedades de color
-            let pHColor = "",
-              CEColor = "",
-              STDColor = "",
-              SO4Color = "",
-              CuColor = "";
+            let pHMedidoColor = "",
+              CEMedidoColor = "",
+              STDMedidoColor = "",
+              SO4MedidoColor = "",
+              CuMedidoColor = "";
 
             // Verificar condiciones y asignar colores
             if (
@@ -478,32 +555,32 @@ export default {
                 parseFloat(restoPozo.pHInferior) ||
               parseFloat(medicion.pHMedido) > parseFloat(restoPozo.pHSuperior)
             ) {
-              pHColor = "red";
+              pHMedidoColor = "red";
             }
             if (parseFloat(medicion.CEMedido) > parseFloat(restoPozo.CE)) {
-              CEColor = "red";
+              CEMedidoColor = "red";
             }
             if (parseFloat(medicion.STDMedido) > parseFloat(restoPozo.STD)) {
-              STDColor = "red";
+              STDMedidoColor = "red";
             }
             if (parseFloat(medicion.SO4Medido) > parseFloat(restoPozo.SO4)) {
-              SO4Color = "red";
+              SO4MedidoColor = "red";
             }
             if (
               parseFloat(medicion.CuMedido) > parseFloat(restoPozo.CuDisuelto)
             ) {
-              CuColor = "red";
+              CuMedidoColor = "red";
             }
 
             // Retornar nuevo objeto combinado con propiedades de color
             return {
               ...medicion,
               ...restoPozo,
-              pHColor,
-              CEColor,
-              STDColor,
-              SO4Color,
-              CuColor,
+              pHMedidoColor,
+              CEMedidoColor,
+              STDMedidoColor,
+              SO4MedidoColor,
+              CuMedidoColor,
             };
           }
           // En caso de no encontrar el pozo, retornar solo la medicion
