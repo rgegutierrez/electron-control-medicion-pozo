@@ -121,6 +121,7 @@
           variant="tonal"
           icon
           color="primary"
+          size="small"
           @click="editarMedicion(item)"
         >
           <v-icon icon="$edit" />

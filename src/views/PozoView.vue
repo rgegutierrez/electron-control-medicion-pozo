@@ -51,7 +51,13 @@
       </template>
 
       <template v-slot:[`item.Acciones`]="{ item }">
-        <v-btn variant="tonal" icon color="primary" @click="editarPozo(item)">
+        <v-btn
+          variant="tonal"
+          icon
+          color="primary"
+          size="small"
+          @click="editarPozo(item)"
+        >
           <v-icon icon="$edit" />
         </v-btn>
       </template>
