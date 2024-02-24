@@ -238,6 +238,29 @@
                 label="Observaciones"
                 v-model="medicionActual.Observaciones"
               ></v-textarea>
+
+              <v-row>
+                <v-col cols="10">
+                  <v-autocomplete
+                    label="Seleccionar Observación"
+                    :items="observaciones"
+                    item-title="Nombre"
+                    item-value="Nombre"
+                    v-model="observacionSeleccionada"
+                    clearable
+                  ></v-autocomplete>
+                </v-col>
+                <v-col cols="2">
+                  <v-btn
+                    variant="tonal"
+                    color="blue darken-1"
+                    icon
+                    @click="agregarObservacion"
+                  >
+                    <v-icon icon="$plus" />
+                  </v-btn>
+                </v-col>
+              </v-row>
             </v-form>
           </v-container>
         </v-card-text>
@@ -301,19 +324,23 @@ export default {
       // Datos del medicion actual para agregar/editar
       medicionActual: {},
       pozos: [],
+      observaciones: [],
       reglasPozo: [(v) => !!v || "El campo Pozo es requerido."],
       reglasFecha: [(v) => !!v || "El campo Fecha es requerido."],
       reglasHora: [
         (v) => !!v || "El campo Hora es requerido.",
         (v) =>
           /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(v) ||
+          /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/.test(v) ||
           "El formato de hora debe ser HH:mm.",
       ],
+      observacionSeleccionada: "",
     };
   },
   async mounted() {
     await this.recargar();
     await this.cargarPozos();
+    await this.cargarObservaciones();
   },
   async unmounted() {
     const datosRef = ref(database, "mediciones-insitu/");
@@ -322,9 +349,24 @@ export default {
     const datosRefPozo = ref(database, "pozos/");
     off(datosRefPozo);
 
+    const datosRefObs = ref(database, "observaciones/");
+    off(datosRefObs);
+
     await this.calcularRangoFechas();
   },
   methods: {
+    agregarObservacion() {
+      if (this.observacionSeleccionada) {
+        if (this.medicionActual.Observaciones === undefined) {
+          this.medicionActual.Observaciones = this.observacionSeleccionada;
+        } else {
+          this.medicionActual.Observaciones +=
+            " | " + this.observacionSeleccionada;
+        }
+
+        this.observacionSeleccionada = "";
+      }
+    },
     limpiarFiltros() {
       this.mesInicio = "";
       this.mesFin = "";
@@ -385,6 +427,26 @@ export default {
               id: key, // Asigna la clave única de Firebase a cada medición
             }));
             this.pozos = pozosArray;
+          }
+        },
+        {
+          onlyOnce: true,
+        }
+      );
+    },
+    async cargarObservaciones() {
+      const datosRef = ref(database, "observaciones/");
+      onValue(
+        datosRef,
+        (snapshot) => {
+          const data = snapshot.val();
+          if (data) {
+            // Verifica si data no es null
+            const observacionesArray = Object.keys(data).map((key) => ({
+              ...data[key],
+              id: key, // Asigna la clave única de Firebase a cada medición
+            }));
+            this.observaciones = observacionesArray;
           }
         },
         {
@@ -493,6 +555,13 @@ export default {
       this.mostrarFormulario = true;
     },
     async insertarMedicion() {
+      console.log(`this.medicionActual.Hora`, this.medicionActual.Hora);
+      if (this.medicionActual.Hora !== undefined) {
+        this.medicionActual.Hora = this.medicionActual.Hora.substring(0, 5);
+      }
+
+      console.log(`this.medicionActual.Hora`, this.medicionActual.Hora);
+
       this.$refs.form.validate().then(({ valid: isValid }) => {
         if (isValid) {
           const data = {
