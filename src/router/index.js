@@ -6,6 +6,8 @@ import CargaDatosView from "../views/CargaDatosView.vue";
 import CargaDatosInSituView from "../views/CargaDatosInSituView.vue";
 
 import PozoView from "../views/PozoView.vue";
+import ObservacionView from "../views/ObservacionView.vue";
+
 
 const routes = [
   { path: "/", component: MedicionesView },
@@ -18,6 +20,7 @@ const routes = [
     component: CargaDatosInSituView,
   },
   { path: "/pozo", name: "Pozos", component: PozoView },
+  { path: "/observacion", name: "Observaciones", component: ObservacionView },
 ];
 
 const router = createRouter({

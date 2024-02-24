@@ -1,6 +1,6 @@
 <template>
   <v-container>
-    <v-toolbar border title="Pozos" class="mb-2">
+    <v-toolbar border title="Observaciones" class="mb-2">
       <v-row class="fill-height">
         <v-col class="d-flex justify-end">
           <v-btn class="mx-2" variant="tonal" color="primary" @click="recargar">
@@ -11,19 +11,19 @@
             class="mx-2"
             variant="tonal"
             color="secondary"
-            @click="agregarPozo"
+            @click="agregarObservacion"
           >
             <v-icon icon="$plus" />
-            Agrega Pozo
+            Agrega Observación
           </v-btn>
         </v-col>
       </v-row>
     </v-toolbar>
 
-    <!-- Tabla de Pozos -->
+    <!-- Tabla de Observaciones -->
     <v-data-table
       :headers="headers"
-      :items="pozos"
+      :items="observaciones"
       :items-per-page="10"
       :items-per-page-options="[10, 30, 50, 100, -1]"
       class="elevation-1"
@@ -51,7 +51,7 @@
       </template>
 
       <template v-slot:[`item.Acciones`]="{ item }">
-        <v-btn variant="tonal" icon color="primary" @click="editarPozo(item)">
+        <v-btn variant="tonal" icon color="primary" @click="editarObservacion(item)">
           <v-icon icon="$edit" />
         </v-btn>
       </template>
@@ -61,63 +61,16 @@
       <v-card>
         <v-card-title>
           <span class="headline"
-            >{{ pozoActual.id ? "Editar" : "Agregar" }} Pozo</span
+            >{{ obsActual.id ? "Editar" : "Agregar" }} Observación</span
           >
         </v-card-title>
         <v-card-text>
           <v-container>
             <v-form ref="form">
               <v-text-field
-                v-model="pozoActual.Nombre"
-                label="Nombre del Pozo"
+                v-model="obsActual.Nombre"
+                label="Nombre del Observación"
                 :rules="reglasRequerido"
-              ></v-text-field>
-              <v-text-field
-                v-model="pozoActual.Tipo"
-                label="Tipo de Pozo"
-                :rules="reglasRequerido"
-              ></v-text-field>
-              <v-text-field
-                label="pH Inferior"
-                v-model="pozoActual.pHInferior"
-                type="number"
-                min="0"
-                required
-              ></v-text-field>
-              <v-text-field
-                label="pH Superior"
-                v-model="pozoActual.pHSuperior"
-                type="number"
-                min="0"
-                required
-              ></v-text-field>
-              <v-text-field
-                label="CE (µS/cm)"
-                v-model="pozoActual.CE"
-                type="number"
-                min="0"
-                required
-              ></v-text-field>
-              <v-text-field
-                label="STD (mg/l)"
-                v-model="pozoActual.STD"
-                type="number"
-                min="0"
-                required
-              ></v-text-field>
-              <v-text-field
-                label="SO4 (mg/l)"
-                v-model="pozoActual.SO4"
-                type="number"
-                min="0"
-                required
-              ></v-text-field>
-              <v-text-field
-                label="Cu (mg/l)"
-                v-model="pozoActual.CuDisuelto"
-                type="number"
-                min="0"
-                required
               ></v-text-field>
             </v-form>
           </v-container>
@@ -131,7 +84,7 @@
             variant="tonal"
             color="blue darken-1"
             text
-            @click="insertarPozo"
+            @click="insertarObservacion"
           >
             <v-icon icon="$complete" />
             Guardar</v-btn
@@ -149,24 +102,13 @@ import { ref, set, onValue, off, push } from "firebase/database";
 export default {
   data() {
     return {
-      // Ajusta los headers para reflejar los datos de un pozo
       headers: [
         { title: "Nombre", key: "Nombre" },
-        { title: "Tipo", key: "Tipo" },
-        { title: "pH Inferior", key: "pHInferior", align: "end" },
-        { title: "pH Superior", key: "pHSuperior", align: "end" },
-        { title: "CE (µS/cm)", key: "CE", align: "end" },
-        { title: "STD (mg/l)", key: "STD", align: "end" },
-        { title: "SO4 (mg/l)", key: "SO4", align: "end" },
-        { title: "Cu Disuelto (mg/l)", key: "CuDisuelto", align: "end" },
         { title: "Acciones", key: "Acciones", sortable: false },
       ],
-      // Datos de ejemplo, remplazar con datos reales obtenidos de la base de datos
-      pozos: [],
-      // Para controlar la visibilidad del formulario de agregar/editar
+      observaciones: [],
       mostrarFormulario: false,
-      // Datos del pozo actual para agregar/editar
-      pozoActual: {},
+      obsActual: {},
       reglasRequerido: [(v) => !!v || "El campo es requerido."],
     };
   },
@@ -174,7 +116,7 @@ export default {
     await this.recargar();
   },
   unmounted() {
-    const datosRef = ref(database, "pozos/");
+    const datosRef = ref(database, "observaciones/");
     off(datosRef);
   },
   methods: {
@@ -184,20 +126,20 @@ export default {
       return isNaN(numero) ? null : numero;
     },
     async recargar() {
-      const datosRef = ref(database, "pozos/");
+      const datosRef = ref(database, "observaciones/");
       onValue(
         datosRef,
         (snapshot) => {
           const data = snapshot.val();
           if (data) {
             // Verifica si data no es null
-            const pozosArray = Object.keys(data).map((key) => ({
+            const obsArray = Object.keys(data).map((key) => ({
               ...data[key],
               id: key, // Asigna la clave única de Firebase a cada medición
             }));
-            this.pozos = pozosArray;
+            this.observaciones = obsArray;
           } else {
-            this.pozos = [];
+            this.observaciones = [];
           }
         },
         {
@@ -205,30 +147,23 @@ export default {
         }
       );
     },
-    agregarPozo() {
-      this.pozoActual = {}; // Resetear pozoActual para un nuevo pozo
+    agregarObservacion() {
+      this.obsActual = {}; // Resetear obsActual para un nuevo observacion
       this.mostrarFormulario = true;
     },
-    editarPozo(pozo) {
-      this.pozoActual = { ...pozo }; // Copiar el pozo a editar en pozoActual
+    editarObservacion(observacion) {
+      this.obsActual = { ...observacion }; // Copiar el observacion a editar en obsActual
       this.mostrarFormulario = true;
     },
-    async insertarPozo() {
+    async insertarObservacion() {
       this.$refs.form.validate().then(({ valid: isValid }) => {
         if (isValid) {
           const data = {
-            Nombre: this.pozoActual.Nombre,
-            Tipo: this.pozoActual.Tipo,
-            pHInferior: this.convertirANullODecimal(this.pozoActual.pHInferior),
-            pHSuperior: this.convertirANullODecimal(this.pozoActual.pHSuperior),
-            CE: this.convertirANullODecimal(this.pozoActual.CE),
-            STD: this.convertirANullODecimal(this.pozoActual.STD),
-            SO4: this.convertirANullODecimal(this.pozoActual.SO4),
-            CuDisuelto: this.convertirANullODecimal(this.pozoActual.CuDisuelto),
+            Nombre: this.obsActual.Nombre,
           };
 
-          if (this.pozoActual.id) {
-            set(ref(database, "pozos/" + this.pozoActual.id), data)
+          if (this.obsActual.id) {
+            set(ref(database, "observaciones/" + this.obsActual.id), data)
               .then(() => {
                 console.log("Datos guardados correctamente.");
               })
@@ -236,8 +171,8 @@ export default {
                 console.log("Error al guardar datos: ", error);
               });
           } else {
-            // Crea una nueva referencia con un ID único en la colección "pozos"
-            const nuevaRef = push(ref(database, "pozos"));
+            // Crea una nueva referencia con un ID único en la colección "observaciones"
+            const nuevaRef = push(ref(database, "observaciones"));
 
             // Inserta los datos en la nueva referencia
             set(nuevaRef, data)
