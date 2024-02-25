@@ -106,45 +106,100 @@
 
       <!-- pH Medido -->
       <template v-slot:[`item.pHMedido`]="{ item }">
-        <span
-          :style="{ fontWeight: item.pHMedidoColor === 'red' ? 'bold' : 'normal', color: item.pHMedidoColor }"
-          :title="`${item.pHInferior} - ${item.pHSuperior}`"
-          >{{ item.pHMedido }}</span
-        >
+        <v-tooltip bottom>
+          <template v-slot:activator="{ props }">
+            <span
+              v-bind="props"
+              :style="{
+                fontWeight: item.pHMedidoColor === 'red' ? 'bold' : 'normal',
+                color: item.pHMedidoColor,
+              }"
+            >
+              {{ item.pHMedido }}
+            </span>
+          </template>
+          <span v-if="item.pHMedidoColor === 'red'">
+            {{ item.pHInferior }} - {{ item.pHSuperior }}
+          </span>
+        </v-tooltip>
       </template>
 
       <!-- CE Medido -->
       <template v-slot:[`item.CEMedido`]="{ item }">
-        <span :style="{ fontWeight: item.CEMedidoColor === 'red' ? 'bold' : 'normal', color: item.CEMedidoColor }" :title="`> ${item.CE}`">{{
-          item.CEMedido
-        }}</span>
+        <v-tooltip bottom>
+          <template v-slot:activator="{ props }">
+            <span
+              v-bind="props"
+              :style="{
+                fontWeight: item.CEMedidoColor === 'red' ? 'bold' : 'normal',
+                color: item.CEMedidoColor,
+              }"
+            >
+              {{ item.CEMedido }}
+            </span>
+          </template>
+          <span v-if="item.CEMedidoColor === 'red'"> &gt; {{ item.CE }} </span>
+        </v-tooltip>
       </template>
 
       <!-- STD Medido -->
       <template v-slot:[`item.STDMedido`]="{ item }">
-        <span
-          :style="{ fontWeight: item.STDMedidoColor === 'red' ? 'bold' : 'normal', color: item.STDMedidoColor }"
-          :title="`> ${item.STD}`"
-          >{{ item.STDMedido }}</span
-        >
+        <v-tooltip bottom>
+          <template v-slot:activator="{ props }">
+            <span
+              v-bind="props"
+              :style="{
+                fontWeight: item.STDMedidoColor === 'red' ? 'bold' : 'normal',
+                color: item.STDMedidoColor,
+              }"
+            >
+              {{ item.STDMedido }}
+            </span>
+          </template>
+          <span v-if="item.STDMedidoColor === 'red'">
+            &gt; {{ item.STD }}
+          </span>
+        </v-tooltip>
       </template>
 
       <!-- SO4 Medido -->
       <template v-slot:[`item.SO4Medido`]="{ item }">
-        <span
-          :style="{ fontWeight: item.SO4MedidoColor === 'red' ? 'bold' : 'normal', color: item.SO4MedidoColor }"
-          :title="`> ${item.SO4}`"
-          >{{ item.SO4Medido }}</span
-        >
+        <v-tooltip bottom>
+          <template v-slot:activator="{ props }">
+            <span
+              v-bind="props"
+              :style="{
+                fontWeight: item.SO4MedidoColor === 'red' ? 'bold' : 'normal',
+                color: item.SO4MedidoColor,
+              }"
+            >
+              {{ item.SO4Medido }}
+            </span>
+          </template>
+          <span v-if="item.SO4MedidoColor === 'red'">
+            &gt; {{ item.SO4 }}
+          </span>
+        </v-tooltip>
       </template>
 
       <!-- Cu Medido -->
       <template v-slot:[`item.CuMedido`]="{ item }">
-        <span
-          :style="{ fontWeight: item.CuMedidoColor === 'red' ? 'bold' : 'normal', color: item.CuMedidoColor }"
-          :title="`> ${item.CuDisuelto}`"
-          >{{ item.CuMedido }}</span
-        >
+        <v-tooltip bottom>
+          <template v-slot:activator="{ props }">
+            <span
+              v-bind="props"
+              :style="{
+                fontWeight: item.CuMedidoColor === 'red' ? 'bold' : 'normal',
+                color: item.CuMedidoColor,
+              }"
+            >
+              {{ item.CuMedido }}
+            </span>
+          </template>
+          <span v-if="item.CuMedidoColor === 'red'">
+            &gt; {{ item.CuDisuelto }}
+          </span>
+        </v-tooltip>
       </template>
 
       <template v-slot:[`item.Acciones`]="{ item }">

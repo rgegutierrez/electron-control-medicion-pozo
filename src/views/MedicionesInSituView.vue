@@ -111,47 +111,107 @@
 
       <!-- pH Medido -->
       <template v-slot:[`item.pHMedido`]="{ item }">
-        <span
-          :style="{ fontWeight: item.pHMedidoColor === 'red' ? 'bold' : 'normal', color: item.pHMedidoColor }"
-          :title="`> ${item.pHInSitu}`"
-          >{{ item.pHMedido }}</span
-        >
+        <v-tooltip bottom>
+          <template v-slot:activator="{ props }">
+            <span
+              v-bind="props"
+              :style="{
+                fontWeight: item.pHMedidoColor === 'red' ? 'bold' : 'normal',
+                color: item.pHMedidoColor,
+              }"
+            >
+              {{ item.pHMedido }}
+            </span>
+          </template>
+          <span v-if="item.pHMedidoColor === 'red'">
+            (Valor +10%) {{ item.pHMedidoDiez }} > {{ item.pHInSitu }} (Límite)
+          </span>
+        </v-tooltip>
       </template>
 
       <!-- CEInSitu Medido -->
       <template v-slot:[`item.CEMedido`]="{ item }">
-        <span
-          :style="{ fontWeight: item.CEMedidoColor === 'red' ? 'bold' : 'normal', color: item.CEMedidoColor }"
-          :title="`> ${item.CEInSitu}`"
-          >{{ item.CEMedido }}</span
-        >
+        <v-tooltip bottom>
+          <template v-slot:activator="{ props }">
+            <span
+              v-bind="props"
+              :style="{
+                fontWeight: item.CEMedidoColor === 'red' ? 'bold' : 'normal',
+                color: item.CEMedidoColor,
+              }"
+            >
+              {{ item.CEMedido }}
+            </span>
+          </template>
+          <span v-if="item.CEMedidoColor === 'red'">
+            (Valor +10%) {{ item.CEMedidoDiez }} > {{ item.CEInSitu }} (Límite)
+          </span>
+        </v-tooltip>
       </template>
 
       <!-- STDInSitu Medido -->
       <template v-slot:[`item.STDMedido`]="{ item }">
-        <span
-          :style="{ fontWeight: item.STDMedidoColor === 'red' ? 'bold' : 'normal', color: item.STDMedidoColor }"
-          :title="`> ${item.STDInSitu}`"
-          >{{ item.STDMedido }}</span
-        >
+        <v-tooltip bottom>
+          <template v-slot:activator="{ props }">
+            <span
+              v-bind="props"
+              :style="{
+                fontWeight: item.STDMedidoColor === 'red' ? 'bold' : 'normal',
+                color: item.STDMedidoColor,
+              }"
+            >
+              {{ item.STDMedido }}
+            </span>
+          </template>
+          <span v-if="item.STDMedidoColor === 'red'">
+            (Valor +10%) {{ item.STDMedidoDiez }} >
+            {{ item.STDInSitu }} (Límite)
+          </span>
+        </v-tooltip>
       </template>
 
       <!-- SalinidadInSitu Medido -->
       <template v-slot:[`item.SalinidadMedido`]="{ item }">
-        <span
-          :style="{ fontWeight: item.SalinidadMedidoColor === 'red' ? 'bold' : 'normal', color: item.SalinidadMedidoColor }"
-          :title="`> ${item.SalinidadInSitu}`"
-          >{{ item.SalinidadMedido }}</span
-        >
+        <v-tooltip bottom>
+          <template v-slot:activator="{ props }">
+            <span
+              v-bind="props"
+              :style="{
+                fontWeight:
+                  item.SalinidadMedidoColor === 'red' ? 'bold' : 'normal',
+                color: item.SalinidadMedidoColor,
+              }"
+            >
+              {{ item.SalinidadMedido }}
+            </span>
+          </template>
+          <span v-if="item.SalinidadMedidoColor === 'red'">
+            (Valor +10%) {{ item.SalinidadMedidoDiez }} >
+            {{ item.SalinidadInSitu }} (Límite)
+          </span>
+        </v-tooltip>
       </template>
 
       <!-- NivelFreaticoInSitu Medido -->
       <template v-slot:[`item.NivelFreaticoMedido`]="{ item }">
-        <span
-          :style="{ fontWeight: item.NivelFreaticoMedidoColor === 'red' ? 'bold' : 'normal', color: item.NivelFreaticoMedidoColor }"
-          :title="`> ${item.NivelFreaticoInSitu}`"
-          >{{ item.NivelFreaticoMedido }}</span
-        >
+        <v-tooltip bottom>
+          <template v-slot:activator="{ props }">
+            <span
+              v-bind="props"
+              :style="{
+                fontWeight:
+                  item.NivelFreaticoMedidoColor === 'red' ? 'bold' : 'normal',
+                color: item.NivelFreaticoMedidoColor,
+              }"
+            >
+              {{ item.NivelFreaticoMedido }}
+            </span>
+          </template>
+          <span v-if="item.NivelFreaticoMedidoColor === 'red'">
+            (Valor +10%) {{ item.NivelFreaticoMedidoDiez }} >
+            {{ item.NivelFreaticoInSitu }} (Límite)
+          </span>
+        </v-tooltip>
       </template>
 
       <template v-slot:[`item.Acciones`]="{ item }">
@@ -434,7 +494,6 @@ export default {
               id: key, // Asigna la clave única de Firebase a cada medición
             }));
             this.pozos = pozosArray;
-            console.log(this.pozos);
           }
         },
         {
@@ -633,27 +692,40 @@ export default {
       return this.permission > 1;
     },
     medicionesAnalitics() {
-      return this.mediciones
-        .filter((medicion) => {
-          const mesMedicion = medicion.Mes; // Asume que ya tienes una propiedad Mes en tu objeto
-          return mesMedicion >= this.mesInicio && mesMedicion <= this.mesFin;
-        })
-        .filter((d) => {
-          // Filtrar mediciones basadas en filtersHeader
-          return Object.keys(this.filtersHeader).every((f) => {
+      // Primero, filtrar mediciones basadas en el rango de meses y los filtros de cabecera
+      const medicionesFiltradas = this.mediciones
+        .filter(
+          (medicion) =>
+            medicion.Mes >= this.mesInicio && medicion.Mes <= this.mesFin
+        )
+        .filter((d) =>
+          Object.keys(this.filtersHeader).every((f) => {
             if (this.filtersHeader[f] == null) return true;
             if (d[f] == null) return false;
             return (
               this.filtersHeader[f].toString().length < 1 ||
               this.filtersHeader[f].toString() === d[f].toString()
             );
-          });
-        })
-        .map((medicion) => {
-          // Buscar el pozo correspondiente y excluir el campo id
+          })
+        );
+
+      // Agrupar las mediciones por pozo
+      const medicionesPorPozo = medicionesFiltradas.reduce((acc, medicion) => {
+        (acc[medicion.Pozo] = acc[medicion.Pozo] || []).push(medicion);
+        return acc;
+      }, {});
+
+      // Identificar el último registro por pozo y aplicar las verificaciones
+      const ultimasMediciones = Object.values(medicionesPorPozo).map(
+        (mediciones) => {
+          // Ordenar por fecha (asumiendo que existe una propiedad fecha) y tomar la última
+          const ultimaMedicion = mediciones.sort(
+            (a, b) => new Date(b.Fecha) - new Date(a.Fecha)
+          )[0];
           const pozo = this.pozos.find(
-            (p) => p.Nombre.trim() === medicion.Pozo.trim()
+            (p) => p.Nombre.trim() === ultimaMedicion.Pozo.trim()
           );
+
           if (pozo) {
             const { id, ...restoPozo } = pozo;
             console.log(id);
@@ -665,50 +737,92 @@ export default {
               SalinidadMedidoColor = "",
               NivelFreaticoMedidoColor = "";
 
-            // Verificar condiciones y asignar colores
-            if (
-              parseFloat(medicion.pHMedido) > parseFloat(restoPozo.pHInSitu)
-            ) {
-              pHMedidoColor = "red";
+            // Inicializar propiedades de color
+            let pHMedidoDiez = 0,
+              CEMedidoDiez = 0,
+              STDMedidoDiez = 0,
+              SalinidadMedidoDiez = 0,
+              NivelFreaticoMedidoDiez = 0;
+
+            // Aplicar verificación solo si los valores no son null, undefined, o string vacío
+            if (ultimaMedicion.pHMedido) {
+              pHMedidoDiez = (
+                parseFloat(ultimaMedicion.pHMedido) * 1.1
+              ).toFixed(2);
+              pHMedidoColor =
+                pHMedidoDiez > parseFloat(restoPozo.pHInSitu) ? "red" : "";
             }
-            if (
-              parseFloat(medicion.CEMedido) > parseFloat(restoPozo.CEInSitu)
-            ) {
-              CEMedidoColor = "red";
+
+            if (ultimaMedicion.CEMedido) {
+              CEMedidoDiez = (
+                parseFloat(ultimaMedicion.CEMedido) * 1.1
+              ).toFixed(2);
+              CEMedidoColor =
+                CEMedidoDiez > parseFloat(restoPozo.CEInSitu) ? "red" : "";
             }
-            if (
-              parseFloat(medicion.STDMedido) > parseFloat(restoPozo.STDInSitu)
-            ) {
-              STDMedidoColor = "red";
+
+            if (ultimaMedicion.STDMedido) {
+              STDMedidoDiez = (
+                parseFloat(ultimaMedicion.STDMedido) * 1.1
+              ).toFixed(2);
+              STDMedidoColor =
+                STDMedidoDiez > parseFloat(restoPozo.STDInSitu) ? "red" : "";
             }
-            console.log(medicion.SalinidadMedido, restoPozo.SalinidadInSitu);
-            if (
-              parseFloat(medicion.SalinidadMedido) >
-              parseFloat(restoPozo.SalinidadInSitu)
-            ) {
-              SalinidadMedidoColor = "red";
+
+            if (ultimaMedicion.SalinidadMedido) {
+              SalinidadMedidoDiez = (
+                parseFloat(ultimaMedicion.SalinidadMedido) * 1.1
+              ).toFixed(2);
+              SalinidadMedidoColor =
+                SalinidadMedidoDiez > parseFloat(restoPozo.SalinidadInSitu)
+                  ? "red"
+                  : "";
             }
-            if (
-              parseFloat(medicion.NivelFreaticoMedido) >
-              parseFloat(restoPozo.NivelFreaticoInSitu)
-            ) {
-              NivelFreaticoMedidoColor = "red";
+
+            if (ultimaMedicion.NivelFreaticoMedido) {
+              NivelFreaticoMedidoDiez = (
+                parseFloat(ultimaMedicion.NivelFreaticoMedido) * 1.1
+              ).toFixed(2);
+              NivelFreaticoMedidoColor =
+                NivelFreaticoMedidoDiez > parseFloat(restoPozo.NivelFreaticoInSitu)
+                  ? "red"
+                  : "";
             }
 
             // Retornar nuevo objeto combinado con propiedades de color
             return {
-              ...medicion,
+              ...ultimaMedicion,
               ...restoPozo,
               pHMedidoColor,
               CEMedidoColor,
               STDMedidoColor,
               SalinidadMedidoColor,
               NivelFreaticoMedidoColor,
+              pHMedidoDiez,
+              CEMedidoDiez,
+              STDMedidoDiez,
+              SalinidadMedidoDiez,
+              NivelFreaticoMedidoDiez,
             };
           }
-          // En caso de no encontrar el pozo, retornar solo la medicion
-          return medicion;
-        });
+
+          return ultimaMedicion;
+        }
+      );
+
+      // Asumiendo que 'ultimasMediciones' es un array de objetos modificados que quieres mezclar de vuelta en 'medicionesFiltradas'
+      for (const ultimaMedicion of ultimasMediciones) {
+        const index = medicionesFiltradas.findIndex(
+          (o) => o.id === ultimaMedicion.id
+        );
+
+        if (index !== -1) {
+          // Reemplazar el objeto en 'medicionesFiltradas' directamente por referencia
+          medicionesFiltradas[index] = ultimaMedicion;
+        }
+      }
+
+      return medicionesFiltradas;
     },
   },
 };
