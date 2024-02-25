@@ -556,13 +556,10 @@ export default {
       this.mostrarFormulario = true;
     },
     async insertarMedicion() {
-      console.log(`this.medicionActual.Hora`, this.medicionActual.Hora);
       if (this.medicionActual.Hora !== undefined) {
         this.medicionActual.Hora = this.medicionActual.Hora.substring(0, 5);
       }
-
-      console.log(`this.medicionActual.Hora`, this.medicionActual.Hora);
-
+      
       this.$refs.form.validate().then(({ valid: isValid }) => {
         if (isValid) {
           const data = {
