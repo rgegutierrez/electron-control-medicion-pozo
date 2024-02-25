@@ -176,14 +176,28 @@ export default {
       reglasRequerido: [(v) => !!v || "El campo es requerido."],
       reglasUsuario: [
         (v) => !!v || "El campo es requerido.",
+        (v) => (v && v.length >= 4) || "El usuario debe tener al menos 4 caracteres.",
+        (v) =>
+          (v && v.length <= 16) ||
+          "La usuario debe tener máximo 16 caracteres.",
         (v) =>
           /^[a-zA-Z0-9_]*$/.test(v) ||
           "No se permiten espacios, puntos ni caracteres especiales.",
       ],
       reglasNombre: [
         (v) => !!v || "El campo es requerido.",
+        (v) => (v && v.length >= 4) || "El Nombre debe tener al menos 4 caracteres.",
         (v) =>
           /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]*$/.test(v) || "Formato de nombre no válido.",
+      ],
+      reglasPassword: [
+        (v) => !!v || "El campo es requerido.",
+        (v) =>
+          (v && v.length >= 4) ||
+          "La contraseña debe tener al menos 4 caracteres.",
+        (v) =>
+          (v && v.length <= 8) ||
+          "La contraseña debe tener máximo 8 caracteres.",
       ],
       tipos: [
         { value: 1, title: "Lectura" },
@@ -209,7 +223,7 @@ export default {
     getReglasPassword() {
       // Si obsActual.id tiene un valor, es una edición y la contraseña no es requerida.
       // Si no, es un nuevo usuario y la contraseña es requerida.
-      return this.obsActual.id ? [] : this.reglasRequerido;
+      return this.obsActual.id ? [] : this.reglasPassword;
     },
     convertirANullODecimal(valor) {
       // Convierte el valor a decimal si es posible; de lo contrario, devuelve null
