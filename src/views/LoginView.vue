@@ -54,6 +54,7 @@ export default {
   name: "LoginView",
   data() {
     return {
+      permission: localStorage.getItem("permission"),
       usuario: "",
       password: "",
       errorMessage: "",
@@ -72,26 +73,32 @@ export default {
           const usuariosRef = ref(database, "usuarios/");
           get(usuariosRef)
             .then((snapshot) => {
-              console.log(snapshot);
               if (snapshot.exists()) {
-                console.log(`exists`);
                 const usuarios = snapshot.val();
                 let usuarioEncontrado = null;
                 // Iterar sobre los usuarios para encontrar una coincidencia
                 Object.keys(usuarios).forEach((key) => {
                   const usuario = usuarios[key];
-                  console.log(usuario.Usuario, `===`, this.usuario);
                   if (usuario.Usuario === this.usuario) {
                     usuarioEncontrado = usuario;
                   }
                 });
 
                 if (usuarioEncontrado) {
+                  // Verificar si el usuario está activo
+                  if (usuarioEncontrado.Activo === 0) {
+                    this.errorMessage =
+                      "La cuenta está inactiva. Contacte al administrador.";
+                    return; // Detiene la ejecución si el usuario está inactivo
+                  }
+
                   const passwordHashed = CryptoJS.SHA256(
                     this.password
                   ).toString(CryptoJS.enc.Hex); // Codifica la contraseña
                   if (usuarioEncontrado.Password === passwordHashed) {
                     localStorage.setItem("isAuthenticated", "true");
+                    localStorage.setItem("permission", usuarioEncontrado.Tipo);
+                    localStorage.setItem("user", usuarioEncontrado.Usuario);
                     window.location.reload();
                   } else {
                     this.errorMessage = "Contraseña incorrecta.";

@@ -18,6 +18,7 @@
             class="my-file-input"
           ></v-file-input>
           <v-btn
+            v-if="havePermission"
             :disabled="tieneErrores"
             class="mx-2"
             variant="tonal"
@@ -223,6 +224,7 @@ import * as XLSX from "xlsx";
 export default {
   data() {
     return {
+      permission: localStorage.getItem("permission"),
       // Ajusta los headers para reflejar los datos de un medicion
       headers: [
         { title: "Fecha", key: "Fecha", width: "120px" },
@@ -608,6 +610,9 @@ export default {
     },
   },
   computed: {
+    havePermission() {
+      return this.permission > 1;
+    },
     cantidadErrores() {
       return this.medicionesAnalitics.filter((medicion) => medicion.error)
         .length;

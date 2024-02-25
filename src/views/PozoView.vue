@@ -8,6 +8,7 @@
             Recargar
           </v-btn>
           <v-btn
+            v-if="havePermission"
             class="mx-2"
             variant="tonal"
             color="secondary"
@@ -52,6 +53,7 @@
 
       <template v-slot:[`item.Acciones`]="{ item }">
         <v-btn
+          v-if="havePermission"
           variant="tonal"
           icon
           color="primary"
@@ -134,6 +136,7 @@
             >Cancelar</v-btn
           >
           <v-btn
+            v-if="havePermission"
             variant="tonal"
             color="blue darken-1"
             text
@@ -155,6 +158,7 @@ import { ref, set, onValue, off, push } from "firebase/database";
 export default {
   data() {
     return {
+      permission: localStorage.getItem("permission"),
       // Ajusta los headers para reflejar los datos de un pozo
       headers: [
         { title: "Nombre", key: "Nombre" },
@@ -262,6 +266,11 @@ export default {
           console.log("El formulario tiene errores.");
         }
       });
+    },
+  },
+  computed: {
+    havePermission() {
+      return this.permission > 1;
     },
   },
 };

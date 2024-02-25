@@ -8,6 +8,7 @@
             Recargar
           </v-btn>
           <v-btn
+            v-if="havePermission"
             class="mx-2"
             variant="tonal"
             color="secondary"
@@ -40,6 +41,11 @@
         </v-data-table-footer>
       </template>
 
+      <!-- Usuario -->
+      <template v-slot:[`item.Usuario`]="{ item }">
+        <span style="font-weight: bold">{{ item.Usuario }}</span>
+      </template>
+
       <!-- Nombre -->
       <template v-slot:[`item.Nombre`]="{ item }">
         <span style="font-weight: bold">{{ item.Nombre }}</span>
@@ -47,6 +53,7 @@
 
       <template v-slot:[`item.Acciones`]="{ item }">
         <v-btn
+          v-if="havePermission"
           variant="tonal"
           icon
           color="primary"
@@ -68,28 +75,56 @@
         <v-card-text>
           <v-container>
             <v-form ref="form">
+              <v-alert
+                v-if="errorMessage"
+                type="error"
+                variant="tonal"
+                class="mb-2"
+                dense
+              >
+                {{ errorMessage }}
+              </v-alert>
               <v-text-field
                 v-model="obsActual.Usuario"
                 label="Usuario"
-                :rules="reglasRequerido"
+                :rules="reglasUsuario"
+                :readonly="!!obsActual.id"
               ></v-text-field>
               <v-text-field
                 v-model="obsActual.Nombre"
                 label="Nombre del Usuario"
-                :rules="reglasRequerido"
+                :rules="reglasNombre"
               ></v-text-field>
-              <v-text-field
+              <v-autocomplete
+                class="mb-6"
+                label="Permisos"
+                :items="tipos"
+                item-title="title"
+                item-value="value"
+                hide-details="auto"
                 v-model="obsActual.Tipo"
-                label="Tipo"
-                :rules="reglasRequerido"
-              ></v-text-field>
+                small-chips
+                dense
+                solo
+              ></v-autocomplete>
               <v-text-field
-                v-if="!obsActual.id"
                 v-model="obsActual.Password"
                 label="Password"
-                :type="'password'"
-                :rules="reglasRequerido"
+                type="password"
+                :rules="getReglasPassword()"
+                :placeholder="
+                  obsActual.id ? 'Dejar vacío para mantener la actual' : ''
+                "
               ></v-text-field>
+
+              <v-select
+                v-model="obsActual.Activo"
+                :items="lstActivo"
+                item-value="value"
+                item-text="text"
+                label="Estado"
+                solo
+              ></v-select>
             </v-form>
           </v-container>
         </v-card-text>
@@ -99,6 +134,7 @@
             >Cancelar</v-btn
           >
           <v-btn
+            v-if="havePermission"
             variant="tonal"
             color="blue darken-1"
             text
@@ -115,17 +151,19 @@
 
 <script>
 import { database } from "../firebaseConfig";
-import { ref, set, onValue, off, push } from "firebase/database";
+import { ref, set, onValue, off, push, get } from "firebase/database";
 import CryptoJS from "crypto-js";
 
 export default {
   data() {
     return {
+      permission: localStorage.getItem("permission"),
       headers: [
-        { text: "Usuario", value: "Usuario" },
-        { text: "Nombre", value: "Nombre" },
-        { text: "Tipo", value: "Tipo" },
-        { text: "Acciones", value: "Acciones", sortable: false },
+        { title: "Usuario", key: "Usuario" },
+        { title: "Nombre", key: "Nombre" },
+        { title: "Permisos", key: "Permiso" },
+        { title: "Activo", key: "ActivoStr" }, // Añade esta línea
+        { title: "Acciones", key: "Acciones", sortable: false },
       ],
       usuarios: [],
       mostrarFormulario: false,
@@ -136,6 +174,27 @@ export default {
         Password: "",
       },
       reglasRequerido: [(v) => !!v || "El campo es requerido."],
+      reglasUsuario: [
+        (v) => !!v || "El campo es requerido.",
+        (v) =>
+          /^[a-zA-Z0-9_]*$/.test(v) ||
+          "No se permiten espacios, puntos ni caracteres especiales.",
+      ],
+      reglasNombre: [
+        (v) => !!v || "El campo es requerido.",
+        (v) =>
+          /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]*$/.test(v) || "Formato de nombre no válido.",
+      ],
+      tipos: [
+        { value: 1, title: "Lectura" },
+        { value: 2, title: "Creación / Edición" },
+        { value: 3, title: "Admin" },
+      ],
+      lstActivo: [
+        { value: 1, title: "Activo" },
+        { value: 0, title: "Inactivo" },
+      ],
+      errorMessage: null,
     };
   },
 
@@ -147,6 +206,11 @@ export default {
     off(datosRef);
   },
   methods: {
+    getReglasPassword() {
+      // Si obsActual.id tiene un valor, es una edición y la contraseña no es requerida.
+      // Si no, es un nuevo usuario y la contraseña es requerida.
+      return this.obsActual.id ? [] : this.reglasRequerido;
+    },
     convertirANullODecimal(valor) {
       // Convierte el valor a decimal si es posible; de lo contrario, devuelve null
       const numero = Number(valor);
@@ -159,12 +223,23 @@ export default {
         (snapshot) => {
           const data = snapshot.val();
           if (data) {
-            // Verifica si data no es null
-            const obsArray = Object.keys(data).map((key) => ({
-              ...data[key],
-              id: key, // Asigna la clave única de Firebase a cada medición
-            }));
-            this.usuarios = obsArray;
+            const obsArray = Object.keys(data).map((key) => {
+              const tipoObjeto = this.tipos.find(
+                (o) => o.value == data[key].Tipo
+              );
+
+              const activoObjeto = this.lstActivo.find(
+                (o) => o.value == data[key].Activo
+              );
+              return {
+                ...data[key],
+                id: key, // Asigna la clave única de Firebase a cada medición
+                Permiso: tipoObjeto ? tipoObjeto.title : "Permiso Desconocido", // Proporciona un valor predeterminado
+                ActivoStr: activoObjeto ? activoObjeto.title : "Inactivo", // Proporciona un valor predeterminado
+              };
+            });
+
+            this.usuarios = obsArray.filter((o) => o.Tipo <= 3);
           } else {
             this.usuarios = [];
           }
@@ -177,53 +252,108 @@ export default {
     agregarUsuario() {
       this.obsActual = {}; // Resetear obsActual para un nuevo usuario
       this.mostrarFormulario = true;
+      this.errorMessage = null;
     },
     editarObservacion(usuario) {
       this.obsActual = { ...usuario }; // Copiar el usuario a editar en obsActual
+      this.obsActual.Password = null;
       this.mostrarFormulario = true;
+      this.errorMessage = null;
+    },
+    usuarioExiste(nombreUsuario) {
+      return new Promise((resolve, reject) => {
+        const usuariosRef = ref(database, "usuarios/");
+        get(usuariosRef)
+          .then((snapshot) => {
+            if (snapshot.exists()) {
+              const usuarios = snapshot.val();
+              const usuarioEncontrado = Object.keys(usuarios).some(
+                (key) => usuarios[key].Usuario === nombreUsuario
+              );
+              resolve(usuarioEncontrado);
+            } else {
+              resolve(false); // No hay usuarios, por lo que no puede estar duplicado
+            }
+          })
+          .catch((error) => {
+            reject(error);
+          });
+      });
     },
     async insertarUsuario() {
-      this.$refs.form.validate().then(({ valid: isValid }) => {
+      this.errorMessage = null;
+
+      this.$refs.form.validate().then(async ({ valid: isValid }) => {
         if (isValid) {
-          const passwordHashed = CryptoJS.SHA256(
-            this.obsActual.Password
-          ).toString(CryptoJS.enc.Hex);
-          const data = {
+          // Verifica si el usuario ya existe solo si es un nuevo usuario
+          if (!this.obsActual.id) {
+            const usuarioYaExiste = await this.usuarioExiste(
+              this.obsActual.Usuario
+            );
+            if (usuarioYaExiste) {
+              this.errorMessage = "El nombre de usuario ya está en uso.";
+              return; // Detiene la ejecución si el usuario ya existe
+            }
+          }
+
+          let data = {
             Usuario: this.obsActual.Usuario,
             Nombre: this.obsActual.Nombre,
             Tipo: this.obsActual.Tipo,
-            Password: passwordHashed,
+            Activo: this.obsActual.Activo,
           };
 
+          // Codifica y actualiza la contraseña solo si se ha proporcionado una nueva
+          if (this.obsActual.Password) {
+            const passwordHashed = CryptoJS.SHA256(
+              this.obsActual.Password
+            ).toString(CryptoJS.enc.Hex);
+            data.Password = passwordHashed;
+          } else if (this.obsActual.id) {
+            // Si estamos editando y no se proporcionó una nueva contraseña, usa la contraseña actual
+            const usuarioActual = this.usuarios.find(
+              (u) => u.id === this.obsActual.id
+            );
+            if (usuarioActual && usuarioActual.Password) {
+              data.Password = usuarioActual.Password; // Asigna la contraseña existente
+            }
+          }
+
           if (this.obsActual.id) {
-            set(ref(database, "usuarios/" + this.obsActual.id), data)
+            // Actualiza el usuario existente
+            set(ref(database, "usuarios/" + this.obsActual.id), {
+              ...data,
+            })
               .then(() => {
-                console.log("Datos guardados correctamente.");
+                console.log("Datos actualizados correctamente.");
               })
               .catch((error) => {
-                console.log("Error al guardar datos: ", error);
+                console.log("Error al actualizar datos: ", error);
+                this.errorMessage = "Error al actualizar el usuario.";
               });
           } else {
-            // Crea una nueva referencia con un ID único en la colección "usuarios"
+            // Inserta un nuevo usuario
             const nuevaRef = push(ref(database, "usuarios"));
-
-            // Inserta los datos en la nueva referencia
             set(nuevaRef, data)
               .then(() => {
-                console.log("Datos insertados con ID único: ", nuevaRef.key);
+                console.log("Usuario insertado con éxito.");
               })
               .catch((error) => {
-                console.log("Error al insertar datos: ", error);
+                console.log("Error al insertar usuario: ", error);
+                this.errorMessage = "Error al insertar el usuario.";
               });
           }
 
-          // Cerrar el formulario después de insertar/editar
+          // Cierra el formulario y recarga la lista de usuarios
           this.mostrarFormulario = false;
-          this.recargar();
-        } else {
-          console.log("El formulario tiene errores.");
+          await this.recargar();
         }
       });
+    },
+  },
+  computed: {
+    havePermission() {
+      return this.permission > 1;
     },
   },
 };

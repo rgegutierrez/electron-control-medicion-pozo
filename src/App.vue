@@ -12,7 +12,14 @@
           <v-list-item>
             <v-list-item-content>
               <v-list-item-title class="title text-center my-8 text-uppercase"
-                >Control Medición Pozo</v-list-item-title
+                ><b>Control Medición Pozo</b></v-list-item-title
+              >
+            </v-list-item-content>
+          </v-list-item>
+          <v-list-item>
+            <v-list-item-content>
+              <v-list-item-title class="title text-center text-uppercase">
+                <b>{{ haveUser }}</b></v-list-item-title
               >
             </v-list-item-content>
           </v-list-item>
@@ -28,23 +35,23 @@
             <v-icon icon="$next" />
             Dashboard
           </v-list-item> -->
-          <v-list-item to="/carga-datos">
+          <v-list-item v-if="havePermission" to="/carga-datos">
             <v-icon icon="$next" />
             Carga Archivo
           </v-list-item>
-          <v-list-item to="/carga-datos-insitu">
+          <v-list-item v-if="havePermission" to="/carga-datos-insitu">
             <v-icon icon="$next" />
             Carga Archivo In Situ
           </v-list-item>
-          <v-list-item to="/pozo">
+          <v-list-item v-if="havePermission" to="/pozo">
             <v-icon icon="$next" />
             Pozos
           </v-list-item>
-          <v-list-item to="/observacion">
+          <v-list-item v-if="havePermission" to="/observacion">
             <v-icon icon="$next" />
             Observaciones
           </v-list-item>
-          <v-list-item to="/usuario">
+          <v-list-item v-if="this.permission >= 3" to="/usuario">
             <v-icon icon="$next" />
             Usuarios
           </v-list-item>
@@ -70,12 +77,15 @@ export default {
     return {
       // Inicializa el estado de autenticación leyendo desde localStorage
       userAuthenticated: localStorage.getItem("isAuthenticated") === "true",
+      permission: localStorage.getItem("permission"),
+      user: localStorage.getItem("user"),
     };
   },
   methods: {
     logout() {
       this.userAuthenticated = false; // Actualiza la variable de datos
       localStorage.setItem("isAuthenticated", "false");
+      localStorage.setItem("permission", 0);
       this.$router.push("/login");
     },
     // Podrías necesitar un método para establecer la autenticación a true también
@@ -86,12 +96,17 @@ export default {
   },
 
   computed: {
+    haveUser() {
+      return this.user;
+    },
     isAuthenticated() {
       if (!this.userAuthenticated) {
         this.logout();
       }
-      console.log(`isAuthenticated`, this.userAuthenticated);
       return this.userAuthenticated;
+    },
+    havePermission() {
+      return this.permission > 1;
     },
   },
 };

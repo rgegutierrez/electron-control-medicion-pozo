@@ -4,6 +4,7 @@
       <v-row class="fill-height">
         <v-col class="d-flex justify-end">
           <v-btn
+            v-if="havePermission"
             class="mx-2"
             variant="tonal"
             color="black"
@@ -153,6 +154,7 @@
 
       <template v-slot:[`item.Acciones`]="{ item }">
         <v-btn
+          v-if="havePermission"
           variant="tonal"
           icon
           color="primary"
@@ -271,6 +273,7 @@
             >Cancelar</v-btn
           >
           <v-btn
+            v-if="havePermission"
             variant="tonal"
             color="blue darken-1"
             text
@@ -291,6 +294,7 @@ import { ref, set, onValue, off, push } from "firebase/database";
 export default {
   data() {
     return {
+      permission: localStorage.getItem("permission"),
       headers: [
         { title: "Fecha", key: "Fecha", width: "120px", t: "s" },
         { title: "Hora", key: "Hora", t: "s" },
@@ -559,7 +563,7 @@ export default {
       if (this.medicionActual.Hora !== undefined) {
         this.medicionActual.Hora = this.medicionActual.Hora.substring(0, 5);
       }
-      
+
       this.$refs.form.validate().then(({ valid: isValid }) => {
         if (isValid) {
           const data = {
@@ -622,6 +626,9 @@ export default {
     },
   },
   computed: {
+    havePermission() {
+      return this.permission > 1;
+    },
     medicionesAnalitics() {
       return this.mediciones
         .filter((medicion) => {
