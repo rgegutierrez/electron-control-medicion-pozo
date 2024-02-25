@@ -112,42 +112,44 @@
       <!-- pH Medido -->
       <template v-slot:[`item.pHMedido`]="{ item }">
         <span
-          :style="{ color: item.pHMedidoColor }"
-          :title="`${item.pHInferior} - ${item.pHSuperior}`"
+          :style="{ fontWeight: item.pHMedidoColor === 'red' ? 'bold' : 'normal', color: item.pHMedidoColor }"
+          :title="`> ${item.pHInSitu}`"
           >{{ item.pHMedido }}</span
         >
       </template>
 
-      <!-- CE Medido -->
+      <!-- CEInSitu Medido -->
       <template v-slot:[`item.CEMedido`]="{ item }">
-        <span :style="{ color: item.CEMedidoColor }" :title="`> ${item.CE}`">{{
-          item.CEMedido
-        }}</span>
+        <span
+          :style="{ fontWeight: item.CEMedidoColor === 'red' ? 'bold' : 'normal', color: item.CEMedidoColor }"
+          :title="`> ${item.CEInSitu}`"
+          >{{ item.CEMedido }}</span
+        >
       </template>
 
-      <!-- STD Medido -->
+      <!-- STDInSitu Medido -->
       <template v-slot:[`item.STDMedido`]="{ item }">
         <span
-          :style="{ color: item.STDMedidoColor }"
-          :title="`> ${item.STD}`"
+          :style="{ fontWeight: item.STDMedidoColor === 'red' ? 'bold' : 'normal', color: item.STDMedidoColor }"
+          :title="`> ${item.STDInSitu}`"
           >{{ item.STDMedido }}</span
         >
       </template>
 
-      <!-- Salinidad Medido -->
+      <!-- SalinidadInSitu Medido -->
       <template v-slot:[`item.SalinidadMedido`]="{ item }">
         <span
-          :style="{ color: item.SalinidadMedidoColor }"
-          :title="`> ${item.Salinidad}`"
+          :style="{ fontWeight: item.SalinidadMedidoColor === 'red' ? 'bold' : 'normal', color: item.SalinidadMedidoColor }"
+          :title="`> ${item.SalinidadInSitu}`"
           >{{ item.SalinidadMedido }}</span
         >
       </template>
 
-      <!-- NivelFreatico Medido -->
+      <!-- NivelFreaticoInSitu Medido -->
       <template v-slot:[`item.NivelFreaticoMedido`]="{ item }">
         <span
-          :style="{ color: item.NivelFreaticoMedidoColor }"
-          :title="`> ${item.NivelFreatico}`"
+          :style="{ fontWeight: item.NivelFreaticoMedidoColor === 'red' ? 'bold' : 'normal', color: item.NivelFreaticoMedidoColor }"
+          :title="`> ${item.NivelFreaticoInSitu}`"
           >{{ item.NivelFreaticoMedido }}</span
         >
       </template>
@@ -432,6 +434,7 @@ export default {
               id: key, // Asigna la clave única de Firebase a cada medición
             }));
             this.pozos = pozosArray;
+            console.log(this.pozos);
           }
         },
         {
@@ -664,27 +667,30 @@ export default {
 
             // Verificar condiciones y asignar colores
             if (
-              parseFloat(medicion.pHMedido) <
-                parseFloat(restoPozo.pHInferior) ||
-              parseFloat(medicion.pHMedido) > parseFloat(restoPozo.pHSuperior)
+              parseFloat(medicion.pHMedido) > parseFloat(restoPozo.pHInSitu)
             ) {
               pHMedidoColor = "red";
             }
-            if (parseFloat(medicion.CEMedido) > parseFloat(restoPozo.CE)) {
+            if (
+              parseFloat(medicion.CEMedido) > parseFloat(restoPozo.CEInSitu)
+            ) {
               CEMedidoColor = "red";
             }
-            if (parseFloat(medicion.STDMedido) > parseFloat(restoPozo.STD)) {
+            if (
+              parseFloat(medicion.STDMedido) > parseFloat(restoPozo.STDInSitu)
+            ) {
               STDMedidoColor = "red";
             }
+            console.log(medicion.SalinidadMedido, restoPozo.SalinidadInSitu);
             if (
               parseFloat(medicion.SalinidadMedido) >
-              parseFloat(restoPozo.Salinidad)
+              parseFloat(restoPozo.SalinidadInSitu)
             ) {
               SalinidadMedidoColor = "red";
             }
             if (
               parseFloat(medicion.NivelFreaticoMedido) >
-              parseFloat(restoPozo.NivelFreatico)
+              parseFloat(restoPozo.NivelFreaticoInSitu)
             ) {
               NivelFreaticoMedidoColor = "red";
             }

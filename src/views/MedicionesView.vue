@@ -107,7 +107,7 @@
       <!-- pH Medido -->
       <template v-slot:[`item.pHMedido`]="{ item }">
         <span
-          :style="{ color: item.pHMedidoColor }"
+          :style="{ fontWeight: item.pHMedidoColor === 'red' ? 'bold' : 'normal', color: item.pHMedidoColor }"
           :title="`${item.pHInferior} - ${item.pHSuperior}`"
           >{{ item.pHMedido }}</span
         >
@@ -115,7 +115,7 @@
 
       <!-- CE Medido -->
       <template v-slot:[`item.CEMedido`]="{ item }">
-        <span :style="{ color: item.CEMedidoColor }" :title="`> ${item.CE}`">{{
+        <span :style="{ fontWeight: item.CEMedidoColor === 'red' ? 'bold' : 'normal', color: item.CEMedidoColor }" :title="`> ${item.CE}`">{{
           item.CEMedido
         }}</span>
       </template>
@@ -123,7 +123,7 @@
       <!-- STD Medido -->
       <template v-slot:[`item.STDMedido`]="{ item }">
         <span
-          :style="{ color: item.STDMedidoColor }"
+          :style="{ fontWeight: item.STDMedidoColor === 'red' ? 'bold' : 'normal', color: item.STDMedidoColor }"
           :title="`> ${item.STD}`"
           >{{ item.STDMedido }}</span
         >
@@ -132,7 +132,7 @@
       <!-- SO4 Medido -->
       <template v-slot:[`item.SO4Medido`]="{ item }">
         <span
-          :style="{ color: item.SO4MedidoColor }"
+          :style="{ fontWeight: item.SO4MedidoColor === 'red' ? 'bold' : 'normal', color: item.SO4MedidoColor }"
           :title="`> ${item.SO4}`"
           >{{ item.SO4Medido }}</span
         >
@@ -141,7 +141,7 @@
       <!-- Cu Medido -->
       <template v-slot:[`item.CuMedido`]="{ item }">
         <span
-          :style="{ color: item.CuMedidoColor }"
+          :style="{ fontWeight: item.CuMedidoColor === 'red' ? 'bold' : 'normal', color: item.CuMedidoColor }"
           :title="`> ${item.CuDisuelto}`"
           >{{ item.CuMedido }}</span
         >
