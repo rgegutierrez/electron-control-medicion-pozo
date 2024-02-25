@@ -1,10 +1,10 @@
 <template>
-  <v-container class="fill-height" fluid>
+  <v-container class="fill-height" fluid style="background-color: gray;">
     <v-row align="center" justify="center">
       <v-col cols="12" sm="8" md="4">
         <v-card class="elevation-12">
           <v-toolbar color="primary" dark>
-            <v-toolbar-title>Acceso</v-toolbar-title>
+            <v-toolbar-title>Control Medición Pozo</v-toolbar-title>
           </v-toolbar>
           <v-card-text>
             <v-form ref="form">

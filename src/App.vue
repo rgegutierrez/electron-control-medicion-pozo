@@ -3,7 +3,7 @@
     <v-layout>
       <v-navigation-drawer
         v-if="isAuthenticated"
-        class="bg-deep-purple"
+        class="primary"
         theme="dark"
         app
         permanent
@@ -59,7 +59,7 @@
 
         <template v-slot:append>
           <div class="pa-2">
-            <v-btn block @click="logout"> Cerrar Sesión </v-btn>
+            <v-btn variant="tonal" color="secondary" block @click="logout"> Cerrar Sesión </v-btn>
           </div>
         </template>
       </v-navigation-drawer>

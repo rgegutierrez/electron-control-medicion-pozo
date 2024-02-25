@@ -18,7 +18,8 @@ async function createWindow() {
     height: 1080,
   });
 
-  // win.setMenu(null);
+  win.setMenu(null);
+  win.maximize();
 
   if (process.env.WEBPACK_DEV_SERVER_URL) {
     // Load the url of the dev server if in development mode
