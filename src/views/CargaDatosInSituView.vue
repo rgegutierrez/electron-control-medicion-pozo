@@ -32,6 +32,27 @@
       </v-row>
     </v-toolbar>
 
+    <v-alert type="info" variant="tonal" class="mb-2" closable>
+      El archivo que contenga mediciones In Situ debe incluir una hoja dedicada
+      para cada pozo registrado en el sistema de mantenimiento. Es crucial
+      asegurarse de que todas las hojas destinadas a ser cargadas posean el
+      nombre adecuado para facilitar la correcta incorporación de la
+      información.
+    </v-alert>
+    <v-alert type="info" variant="tonal" class="mb-2" closable>
+      Antes de proceder con la carga de datos, es imprescindible verificar que
+      los pozos estén correctamente registrados en el mantenedor de pozos.
+    </v-alert>
+    <v-alert type="warning" variant="tonal" class="mb-2" closable>
+      Por favor, evite subir el mismo archivo múltiples veces, ya que esto
+      resultará en la duplicación de los datos.
+    </v-alert>
+
+    <v-alert type="warning" variant="tonal" class="mb-2" closable>
+      Antes de proceder con la carga, asegúrese de que los datos estén
+      correctamente estructurados según la siguiente tabla.
+    </v-alert>
+
     <v-alert
       v-if="cantidadErrores > 0"
       type="error"
@@ -40,11 +61,6 @@
     >
       Existen {{ cantidadErrores }} registros con errores que se deben corregir
       para cargar el archivo.
-    </v-alert>
-
-    <v-alert v-if="noExistePozo" type="error" variant="tonal" class="mb-2">
-      El Pozo al que pertenece este archivo no esta cargado. Primero agregue el
-      Pozo, luego vuelva a cargar el archivo.
     </v-alert>
 
     <!-- Tabla de Mediciones -->
@@ -253,7 +269,6 @@ export default {
       Pozo: "",
       archivoSeleccionado: null,
       estaCargando: false,
-      noExistePozo: false,
     };
   },
   async mounted() {
@@ -419,8 +434,6 @@ export default {
       return `${year}-${month}-${day}`;
     },
     handleFileUpload(event) {
-      this.noExistePozo = false;
-
       const file = event.target.files[0];
       if (!file) return; // Salir si no hay archivo
 

@@ -312,7 +312,6 @@ export default {
       headers: [
         { title: "Fecha", key: "Fecha", width: "120px", t: "s" },
         { title: "Pozo", key: "Pozo", width: "200px", t: "s" },
-        { title: "Criticidad", key: "Tipo", t: "s" },
         { title: "pH Medido", key: "pHMedido", align: "end", t: "n" },
         { title: "CE Medido (µS/cm)", key: "CEMedido", align: "end", t: "n" },
         { title: "STD Medido (mg/l)", key: "STDMedido", align: "end", t: "n" },

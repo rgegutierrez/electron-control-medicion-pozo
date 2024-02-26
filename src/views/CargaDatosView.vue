@@ -32,6 +32,24 @@
       </v-row>
     </v-toolbar>
 
+    <v-alert type="info" variant="tonal" class="mb-2" closable>
+      Los archivos subidos deben llevar un nombre que corresponda al pozo al
+      cual pertenecen los datos, y deben incluir una hoja titulada 'Base de
+      datos' para asegurar la correcta carga de la información.
+    </v-alert>
+    <v-alert type="info" variant="tonal" class="mb-2" closable>
+      Antes de proceder con la carga de datos, es imprescindible verificar que
+      los pozos estén correctamente registrados en el mantenedor de pozos.
+    </v-alert>
+    <v-alert type="warning" variant="tonal" class="mb-2" closable>
+      Por favor, evite subir el mismo archivo múltiples veces, ya que esto
+      resultará en la duplicación de los datos.
+    </v-alert>
+    <v-alert type="warning" variant="tonal" class="mb-2" closable>
+      Antes de proceder con la carga, asegúrese de que los datos estén
+      correctamente estructurados según la siguiente tabla.
+    </v-alert>
+
     <v-alert
       v-if="cantidadErrores > 0"
       type="error"
