@@ -117,47 +117,6 @@
         <span style="font-weight: bold">{{ item.Pozo }}</span>
       </template>
 
-      <!-- pH Medido -->
-      <template v-slot:[`item.pHMedido`]="{ item }">
-        <span
-          :style="{ color: item.pHColor }"
-          :title="`${item.pHInferior} - ${item.pHSuperior}`"
-          >{{ item.pHMedido }}</span
-        >
-      </template>
-
-      <!-- CE Medido -->
-      <template v-slot:[`item.CEMedido`]="{ item }">
-        <span :style="{ color: item.CEColor }" :title="`> ${item.CE}`">{{
-          item.CEMedido
-        }}</span>
-      </template>
-
-      <!-- STD Medido -->
-      <template v-slot:[`item.STDMedido`]="{ item }">
-        <span :style="{ color: item.STDColor }" :title="`> ${item.STD}`">{{
-          item.STDMedido
-        }}</span>
-      </template>
-
-      <!-- Salinidad Medido -->
-      <template v-slot:[`item.SalinidadMedido`]="{ item }">
-        <span
-          :style="{ color: item.SalColor }"
-          :title="`> ${item.Salinidad}`"
-          >{{ item.SalinidadMedido }}</span
-        >
-      </template>
-
-      <!-- NivelFreatico Medido -->
-      <template v-slot:[`item.NivelFreaticoMedido`]="{ item }">
-        <span
-          :style="{ color: item.NFColor }"
-          :title="`> ${item.NivelFreatico}`"
-          >{{ item.NivelFreaticoMedido }}</span
-        >
-      </template>
-
       <template v-slot:[`item.Acciones`]="{ item }">
         <v-btn
           v-if="item.error"
@@ -455,7 +414,7 @@ export default {
     },
     handleFileUpload(event) {
       this.mediciones = [];
-      
+
       const file = event.target.files[0];
       if (!file) return; // Salir si no hay archivo
 
@@ -552,78 +511,106 @@ export default {
       let NV = 0;
       // let vamosAUsarElNVAnterior = false;
 
-      const datosFiltrados = data.slice(1).reduce((acumulador, fila, index) => {
-        // Inicializa el objeto que potencialmente agregaremos al acumulador
-        const filaFiltrada = {};
+      const datosFiltrados = data
+        .slice(indexFila)
+        .reduce((acumulador, fila, index) => {
+          // Inicializa el objeto que potencialmente agregaremos al acumulador
+          const filaFiltrada = {};
 
-        // Bandera para verificar si la fecha es válida
-        let fechaEsValida = true;
+          // Bandera para verificar si la fecha es válida
+          let fechaEsValida = true;
 
-        Object.keys(indicesDeColumnas).forEach((columna) => {
-          const nombreColumnaAmigable = mapeoColumnas[columna];
+          Object.keys(indicesDeColumnas).forEach((columna) => {
+            const nombreColumnaAmigable = mapeoColumnas[columna];
 
-          if (columna === "Fecha") {
-            let fechaAux = fila[indicesDeColumnas[columna]];
+            if (columna === "Fecha") {
+              let fechaAux = fila[indicesDeColumnas[columna]];
 
-            if (fechaAux === undefined && index > indexFila) {
-              fechaAux = fecha;
-              // vamosAUsarElNVAnterior = true;
+              if (fechaAux === undefined && index > indexFila) {
+                fechaAux = fecha;
+                // vamosAUsarElNVAnterior = true;
+              } else {
+                fecha = fila[indicesDeColumnas[columna]];
+                // vamosAUsarElNVAnterior = false;
+              }
+
+              let fechaConvertida = this.excelSerialDateToJSDate(fechaAux);
+
+              // Verifica si la fechaConvertida está en el formato yyyy-MM-dd
+              const regexFecha = /^\d{4}-\d{2}-\d{2}$/;
+              if (!regexFecha.test(fechaConvertida)) {
+                // fechaConvertida = fecha;
+                fechaEsValida = false;
+                return; // Sale de la iteración actual del forEach
+              }
+
+              filaFiltrada[nombreColumnaAmigable] = fechaConvertida;
+              filaFiltrada["Mes"] = fechaConvertida.substring(0, 7);
+              filaFiltrada["Pozo"] = Pozo;
             } else {
-              fecha = fila[indicesDeColumnas[columna]];
-              // vamosAUsarElNVAnterior = false;
+              filaFiltrada[nombreColumnaAmigable] =
+                fila[indicesDeColumnas[columna]];
             }
 
-            let fechaConvertida = this.excelSerialDateToJSDate(fechaAux);
-
-            // Verifica si la fechaConvertida está en el formato yyyy-MM-dd
-            const regexFecha = /^\d{4}-\d{2}-\d{2}$/;
-            if (!regexFecha.test(fechaConvertida)) {
-              // fechaConvertida = fecha;
-              fechaEsValida = false;
-              return; // Sale de la iteración actual del forEach
+            if (columna === "Hora") {
+              filaFiltrada[nombreColumnaAmigable] = this.excelTimeToReadable(
+                fila[indicesDeColumnas[columna]]
+              );
             }
 
-            filaFiltrada[nombreColumnaAmigable] = fechaConvertida;
-            filaFiltrada["Mes"] = fechaConvertida.substring(0, 7);
-            filaFiltrada["Pozo"] = Pozo;
-          } else {
-            filaFiltrada[nombreColumnaAmigable] =
-              fila[indicesDeColumnas[columna]];
+            //TODO
+            if (columna === "Nivel Freático") {
+              let NVAux = fila[indicesDeColumnas[columna]];
+
+              if (NVAux === undefined && index > indexFila) {
+                NVAux = NV;
+              } else {
+                NV = fila[indicesDeColumnas[columna]];
+              }
+
+              if (Pozo == "ROM I-4A") {
+                if (filaFiltrada["Hora"] !== null) {
+                  filaFiltrada[nombreColumnaAmigable] =
+                    this.ajustarADecimalYConvertir(NVAux);
+                } else {
+                  filaFiltrada[nombreColumnaAmigable] = undefined;
+                }
+              } else {
+                if (filaFiltrada["pHMedido"] !== undefined) {
+                  filaFiltrada[nombreColumnaAmigable] =
+                    this.ajustarADecimalYConvertir(NVAux);
+                } else {
+                  filaFiltrada[nombreColumnaAmigable] = undefined;
+                }
+              }
+            }
+          });
+
+          // Si la fecha es válida, agrega la fila filtrada al acumulador
+          if (fechaEsValida) {
+            acumulador.push(filaFiltrada);
           }
 
-          if (columna === "Hora") {
-            filaFiltrada[nombreColumnaAmigable] = this.excelTimeToReadable(
-              fila[indicesDeColumnas[columna]]
-            );
-          }
-
-          //TODO
-          if (columna === "Nivel Freático") {
-            let NVAux = fila[indicesDeColumnas[columna]];
-
-            if (NVAux === undefined && index > indexFila) {
-              NVAux = NV;
-            } else {
-              NV = fila[indicesDeColumnas[columna]];
-            }
-
-            if (filaFiltrada["pHMedido"] !== undefined) {
-              filaFiltrada[nombreColumnaAmigable] = NVAux;
-            } else {
-              filaFiltrada[nombreColumnaAmigable] = undefined;
-            }
-          }
-        });
-
-        // Si la fecha es válida, agrega la fila filtrada al acumulador
-        if (fechaEsValida) {
-          acumulador.push(filaFiltrada);
-        }
-
-        return acumulador;
-      }, []); // Inicializa el acumulador como un array vacío
+          return acumulador;
+        }, []); // Inicializa el acumulador como un array vacío
 
       return datosFiltrados;
+    },
+    ajustarADecimalYConvertir(variable) {
+      if (
+        variable !== null &&
+        variable !== undefined &&
+        typeof variable === "number"
+      ) {
+        // Primero, convierte el número a una cadena con 3 decimales
+        const resultadoConFormato = variable.toFixed(3);
+        // Luego, convierte la cadena de vuelta a un número decimal
+        return parseFloat(resultadoConFormato);
+        // O, alternativamente, puedes usar: return Number(resultadoConFormato);
+      } else {
+        // Retorna la variable tal cual si no es un número
+        return variable;
+      }
     },
   },
   computed: {
@@ -658,12 +645,6 @@ export default {
             const { id, ...restoPozo } = pozo;
             console.log(id);
 
-            // Inicializar propiedades de color y error
-            let pHColor = "",
-              CEColor = "",
-              STDColor = "",
-              SalColor = "",
-              NFColor = "";
             let error = false; // Indica si hay un error en las mediciones
 
             // Función para verificar si un valor es un número decimal
@@ -689,42 +670,10 @@ export default {
               }
             });
 
-            // Verificar condiciones y asignar colores
-            if (
-              parseFloat(medicion.pHMedido) <
-                parseFloat(restoPozo.pHInferior) ||
-              parseFloat(medicion.pHMedido) > parseFloat(restoPozo.pHSuperior)
-            ) {
-              pHColor = "red";
-            }
-            if (parseFloat(medicion.CEMedido) > parseFloat(restoPozo.CE)) {
-              CEColor = "red";
-            }
-            if (parseFloat(medicion.STDMedido) > parseFloat(restoPozo.STD)) {
-              STDColor = "red";
-            }
-            if (
-              parseFloat(medicion.SalinidadMedido) >
-              parseFloat(restoPozo.Salinidad)
-            ) {
-              SalColor = "red";
-            }
-            if (
-              parseFloat(medicion.NivelFreaticoMedido) >
-              parseFloat(restoPozo.NivelFreatico)
-            ) {
-              NFColor = "red";
-            }
-
             // Retornar nuevo objeto combinado con propiedades de color
             return {
               ...medicion,
               ...restoPozo,
-              pHColor,
-              CEColor,
-              STDColor,
-              SalColor,
-              NFColor,
               error, // Agregar el campo de error
             };
           }
