@@ -63,6 +63,25 @@
       para cargar el archivo.
     </v-alert>
 
+    <v-container>
+      <v-row>
+        <v-col>
+          <v-autocomplete
+            label="Pozo"
+            :items="pozos"
+            item-title="Nombre"
+            item-value="Nombre"
+            hide-details="auto"
+            v-model="filtersHeader['Pozo']"
+            small-chips
+            dense
+            solo
+            clearable
+          ></v-autocomplete>
+        </v-col>
+      </v-row>
+    </v-container>
+
     <!-- Tabla de Mediciones -->
     <v-data-table
       :headers="headers"
@@ -269,6 +288,7 @@ export default {
       Pozo: "",
       archivoSeleccionado: null,
       estaCargando: false,
+      filtersHeader: {},
     };
   },
   async mounted() {
@@ -434,6 +454,8 @@ export default {
       return `${year}-${month}-${day}`;
     },
     handleFileUpload(event) {
+      this.mediciones = [];
+      
       const file = event.target.files[0];
       if (!file) return; // Salir si no hay archivo
 
@@ -616,87 +638,99 @@ export default {
       return this.medicionesAnalitics.some((medicion) => medicion.error);
     },
     medicionesAnalitics() {
-      return this.mediciones.map((medicion) => {
-        // Buscar el pozo correspondiente y excluir el campo id
-        const pozo = this.pozos.find(
-          (p) => p.Nombre.trim() === medicion.Pozo.trim()
-        );
-        if (pozo) {
-          const { id, ...restoPozo } = pozo;
-          console.log(id);
+      return this.mediciones
+        .filter((d) =>
+          Object.keys(this.filtersHeader).every((f) => {
+            if (this.filtersHeader[f] == null) return true;
+            if (d[f] == null) return false;
+            return (
+              this.filtersHeader[f].toString().length < 1 ||
+              this.filtersHeader[f].toString() === d[f].toString()
+            );
+          })
+        )
+        .map((medicion) => {
+          // Buscar el pozo correspondiente y excluir el campo id
+          const pozo = this.pozos.find(
+            (p) => p.Nombre.trim() === medicion.Pozo.trim()
+          );
+          if (pozo) {
+            const { id, ...restoPozo } = pozo;
+            console.log(id);
 
-          // Inicializar propiedades de color y error
-          let pHColor = "",
-            CEColor = "",
-            STDColor = "",
-            SalColor = "",
-            NFColor = "";
-          let error = false; // Indica si hay un error en las mediciones
+            // Inicializar propiedades de color y error
+            let pHColor = "",
+              CEColor = "",
+              STDColor = "",
+              SalColor = "",
+              NFColor = "";
+            let error = false; // Indica si hay un error en las mediciones
 
-          // Función para verificar si un valor es un número decimal
-          const esDecimal = (valor) =>
-            !isNaN(valor) && !isNaN(parseFloat(valor));
+            // Función para verificar si un valor es un número decimal
+            const esDecimal = (valor) =>
+              !isNaN(valor) && !isNaN(parseFloat(valor));
 
-          // Verificar si cada medición es un número decimal
-          const campos = [
-            "pHMedido",
-            "CEMedido",
-            "STDMedido",
-            "SalinidadMedido",
-            "NivelFreaticoMedido",
-          ];
+            // Verificar si cada medición es un número decimal
+            const campos = [
+              "pHMedido",
+              "CEMedido",
+              "STDMedido",
+              "SalinidadMedido",
+              "NivelFreaticoMedido",
+            ];
 
-          campos.forEach((campo) => {
-            if (medicion[campo] == undefined) {
-              medicion[campo] = null;
-            } else {
-              if (!esDecimal(medicion[campo])) {
-                error = true; // Marcar error si el campo no es un número decimal
+            campos.forEach((campo) => {
+              if (medicion[campo] == undefined) {
+                medicion[campo] = null;
+              } else {
+                if (!esDecimal(medicion[campo])) {
+                  error = true; // Marcar error si el campo no es un número decimal
+                }
               }
+            });
+
+            // Verificar condiciones y asignar colores
+            if (
+              parseFloat(medicion.pHMedido) <
+                parseFloat(restoPozo.pHInferior) ||
+              parseFloat(medicion.pHMedido) > parseFloat(restoPozo.pHSuperior)
+            ) {
+              pHColor = "red";
             }
-          });
+            if (parseFloat(medicion.CEMedido) > parseFloat(restoPozo.CE)) {
+              CEColor = "red";
+            }
+            if (parseFloat(medicion.STDMedido) > parseFloat(restoPozo.STD)) {
+              STDColor = "red";
+            }
+            if (
+              parseFloat(medicion.SalinidadMedido) >
+              parseFloat(restoPozo.Salinidad)
+            ) {
+              SalColor = "red";
+            }
+            if (
+              parseFloat(medicion.NivelFreaticoMedido) >
+              parseFloat(restoPozo.NivelFreatico)
+            ) {
+              NFColor = "red";
+            }
 
-          // Verificar condiciones y asignar colores
-          if (
-            parseFloat(medicion.pHMedido) < parseFloat(restoPozo.pHInferior) ||
-            parseFloat(medicion.pHMedido) > parseFloat(restoPozo.pHSuperior)
-          ) {
-            pHColor = "red";
+            // Retornar nuevo objeto combinado con propiedades de color
+            return {
+              ...medicion,
+              ...restoPozo,
+              pHColor,
+              CEColor,
+              STDColor,
+              SalColor,
+              NFColor,
+              error, // Agregar el campo de error
+            };
           }
-          if (parseFloat(medicion.CEMedido) > parseFloat(restoPozo.CE)) {
-            CEColor = "red";
-          }
-          if (parseFloat(medicion.STDMedido) > parseFloat(restoPozo.STD)) {
-            STDColor = "red";
-          }
-          if (
-            parseFloat(medicion.SalinidadMedido) >
-            parseFloat(restoPozo.Salinidad)
-          ) {
-            SalColor = "red";
-          }
-          if (
-            parseFloat(medicion.NivelFreaticoMedido) >
-            parseFloat(restoPozo.NivelFreatico)
-          ) {
-            NFColor = "red";
-          }
-
-          // Retornar nuevo objeto combinado con propiedades de color
-          return {
-            ...medicion,
-            ...restoPozo,
-            pHColor,
-            CEColor,
-            STDColor,
-            SalColor,
-            NFColor,
-            error, // Agregar el campo de error
-          };
-        }
-        // En caso de no encontrar el pozo, retornar solo la medicion
-        return medicion;
-      });
+          // En caso de no encontrar el pozo, retornar solo la medicion
+          return medicion;
+        });
     },
   },
 };

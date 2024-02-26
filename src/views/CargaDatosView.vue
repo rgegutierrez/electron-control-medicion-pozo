@@ -385,6 +385,8 @@ export default {
       return `${year}-${month}-${day}`;
     },
     handleFileUpload(event) {
+      this.mediciones = [];
+      
       this.noExistePozo = false;
 
       const file = event.target.files[0];
