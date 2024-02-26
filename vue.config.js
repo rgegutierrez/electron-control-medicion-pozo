@@ -17,4 +17,13 @@ module.exports = defineConfig({
       path: "commonjs path",
     },
   },
+
+  pluginOptions: {
+    electronBuilder: {
+      // Opciones de configuración de Electron Builder
+      productName: "Control Medición Pozo",
+      appId: "com.jgutierrez.cmp",
+      icon: "icon.ico"
+    }
+  }
 });
