@@ -1,7 +1,7 @@
 import { createRouter, createWebHashHistory } from "vue-router";
 import MedicionesView from "../views/MedicionesView.vue";
 import MedicionesInSituView from "../views/MedicionesInSituView.vue";
-import DashboardView from "../views/DashboardView.vue";
+import EliminarView from "../views/EliminarView.vue";
 import CargaDatosView from "../views/CargaDatosView.vue";
 import CargaDatosInSituView from "../views/CargaDatosInSituView.vue";
 import PozoView from "../views/PozoView.vue";
@@ -13,7 +13,7 @@ const routes = [
   { path: "/login", component: LoginView },
   { path: "/", component: MedicionesView },
   { path: "/insitu", component: MedicionesInSituView },
-  { path: "/dashboard", name: "Dashboard", component: DashboardView },
+  { path: "/eliminar", name: "Eliminar Datos", component: EliminarView },
   { path: "/carga-datos", name: "Carga de Datos", component: CargaDatosView },
   {
     path: "/carga-datos-insitu",

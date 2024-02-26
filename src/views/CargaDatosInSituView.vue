@@ -217,7 +217,7 @@
 
 <script>
 import { database } from "../firebaseConfig";
-import { ref, set, onValue, off, push, remove } from "firebase/database";
+import { ref, set, onValue, off, push } from "firebase/database";
 
 import * as XLSX from "xlsx";
 
@@ -265,24 +265,6 @@ export default {
   },
   methods: {
     async cargarDatos() {
-      const promesaEliminar = new Promise((resolve, reject) => {
-        // Referencia al nodo que deseas eliminar
-        const refEliminar = ref(database, "mediciones-insitu");
-
-        // Elimina el nodo
-        remove(refEliminar)
-          .then(() => {
-            console.log("Nodo eliminado exitosamente.");
-            resolve("Nodo eliminado exitosamente."); // Resuelve la promesa indicando éxito
-          })
-          .catch((error) => {
-            console.error("Error al eliminar nodo: ", error);
-            reject(error); // Rechaza la promesa si hay un error
-          });
-      });
-
-      await Promise.all([promesaEliminar]);
-
       this.estaCargando = true; // Inicia el indicador de carga
 
       // Array para almacenar todas las promesas creadas por las inserciones de datos

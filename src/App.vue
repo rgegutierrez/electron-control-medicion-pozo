@@ -31,10 +31,6 @@
             <v-icon icon="$next" />
             Mediciones In Situ
           </v-list-item>
-          <!-- <v-list-item to="/dashboard">
-            <v-icon icon="$next" />
-            Dashboard
-          </v-list-item> -->
           <v-list-item v-if="havePermission" to="/carga-datos">
             <v-icon icon="$next" />
             Carga Archivo
@@ -55,11 +51,17 @@
             <v-icon icon="$next" />
             Usuarios
           </v-list-item>
+          <v-list-item v-if="this.permission == 69" to="/eliminar">
+            <v-icon icon="$next" />
+            Eliminar Datos
+          </v-list-item>
         </v-list>
 
         <template v-slot:append>
           <div class="pa-2">
-            <v-btn variant="tonal" color="secondary" block @click="logout"> Cerrar Sesión </v-btn>
+            <v-btn variant="tonal" color="secondary" block @click="logout">
+              Cerrar Sesión
+            </v-btn>
           </div>
         </template>
       </v-navigation-drawer>
